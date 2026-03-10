@@ -1,17 +1,71 @@
 import React from "react";
-import {BrowserRouter,Routes,Route} from "react-router-dom";
-import ReactDOM from "react-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import LibrarianLogin from "./pages/LibrarianLogin";
+import LibrarianDashboard from "./pages/LibrarianDashboard";
+import Books from "./pages/Books";
+import MyBooks from "./pages/MyBooks";
+import ManageBooks from "./pages/ManageBooks";
+import ManageRecords from "./pages/ManageRecords";
+import ManageUsers from "./pages/ManageUsers";
+import Profile from "./pages/Profile";
+import AddLibrarian from "./pages/AddLibrarian";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { ToastProvider } from "./components/Toast";
+
 function App() {
-    return(
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/Login" element={<Login />} />
-                <Route path="/Register" element={<Register />} />
-            </Routes>
-        </BrowserRouter>
+    return (
+        <ToastProvider>
+            <BrowserRouter>
+                <Routes>
+                    {/* Public */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/librarian/login" element={<LibrarianLogin />} />
+
+                    {/* Shared/User-protected (accessible by both) */}
+                    <Route path="/profile" element={
+                        <ProtectedRoute role="any"><Profile /></ProtectedRoute>
+                    } />
+
+                    {/* User-only protected */}
+                    <Route path="/dashboard" element={
+                        <ProtectedRoute role="user"><Dashboard /></ProtectedRoute>
+                    } />
+                    <Route path="/books" element={
+                        <ProtectedRoute role="user"><Books /></ProtectedRoute>
+                    } />
+                    <Route path="/my-books" element={
+                        <ProtectedRoute role="user"><MyBooks /></ProtectedRoute>
+                    } />
+
+                    {/* Librarian-protected */}
+                    <Route path="/librarian/dashboard" element={
+                        <ProtectedRoute role="librarian"><LibrarianDashboard /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/manage-books" element={
+                        <ProtectedRoute role="librarian"><ManageBooks /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/manage-records" element={
+                        <ProtectedRoute role="librarian"><ManageRecords /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/manage-users" element={
+                        <ProtectedRoute role="librarian"><ManageUsers /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/add-librarian" element={
+                        <ProtectedRoute role="librarian"><AddLibrarian /></ProtectedRoute>
+                    } />
+
+                    {/* Fallback */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </ToastProvider>
     );
 }
+
 export default App;

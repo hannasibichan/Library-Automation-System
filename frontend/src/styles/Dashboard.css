@@ -1,0 +1,23 @@
+/* Dashboard v2 */
+.borrow-progress-wrap {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: 1rem;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+}
+
+.borrow-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.65rem;
+    font-size: 0.875rem;
+    color: rgba(200, 190, 255, 0.7);
+    font-weight: 500;
+}
+
+.borrow-pct {
+    color: #a78bfa;
+    font-weight: 700;
+}

@@ -1,55 +1,20 @@
-body
-{
-    background: linear-gradient(to right, #eddfff, #e2e0ff);
+/* Register.css — specific multi-column tweaks for registration */
+.register-role-hint {
+    display: block;
+    font-size: 0.76rem;
+    color: rgba(167, 139, 250, 0.45);
+    margin-top: 0.35rem;
+    font-style: italic;
+    font-weight: 500;
 }
-.login-container 
-{
-    width: 300px; 
-    margin: 100px auto; 
-    margin-top: 0px;
-    padding: 20px; 
-    border: 1px solid #ccc; 
-    border-radius: 5px; 
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-    height: auto;
-    background-color: white;
-} 
-.logo
-{ 
-    align-items: center; 
-    text-align: center;
-    padding-top: 30px; 
-} 
-label 
-{ 
-    display: block; 
-    margin-bottom: 5px; 
-} 
-input,
-select
-{ 
-    width: 95%; 
-    padding: 8px; 
-    margin-bottom: 10px; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-} 
-select
-{
-    width:100%;
+
+.auth-form input::placeholder {
+    font-size: 0.85rem;
+    color: rgba(167, 139, 250, 0.3);
 }
-button 
-{ 
-    width: 100%; 
-    padding: 10px; 
-    background: linear-gradient(to right, #2a348a, #491a76); 
-    color: white; 
-    border: none; 
-    border-radius: 4px; 
-    cursor: pointer;
-    margin-top: 5px; 
-} 
-.error-message 
-{ 
-            color: red; text-align: center; 
+
+@media (max-width: 480px) {
+    .auth-form>div {
+        grid-template-columns: 1fr !important;
+    }
 }

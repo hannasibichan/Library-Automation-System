@@ -1,51 +1,70 @@
-body
-{
-    background: linear-gradient(to right, #eddfff, #e2e0ff);
+/* Login.css — Modern auth refinements */
+.auth-page {
+    position: relative;
+    overflow: hidden;
 }
-.login-container 
-{
-    width: 300px; 
-    margin: 100px auto; 
-    margin-top: 0px;
-    padding: 20px; 
-    border: 1px solid #ccc; 
-    border-radius: 5px; 
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-    height:auto;
-    background-color: white;
-} 
-.logo
-{ 
-    align-items: center; 
-    text-align: center;
-    padding-top: 30px; 
-} 
-label 
-{ 
-    display: block; 
-    margin-bottom: 5px; 
-} 
-input[type="text"], 
-input[type="password"] 
-{ 
-    width: 95%; 
-    padding: 8px; 
-    margin-bottom: 10px; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-} 
-button 
-{ 
-    width: 100%; 
-    padding: 10px; 
-    background: linear-gradient(to right, #2a348a, #491a76); 
-    color: white; 
-    border: none; 
-    border-radius: 4px; 
-    cursor: pointer;
-    margin-top: 5px; 
-} 
-.error-message 
-{ 
-    color: red; text-align: center; 
+
+.auth-decoration {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.auth-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.6;
+    animation: orbMove 20s infinite alternate ease-in-out;
+}
+
+.auth-orb-1 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.25) 0%, transparent 70%);
+    top: -100px;
+    right: -50px;
+}
+
+.auth-orb-2 {
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(67, 56, 202, 0.2) 0%, transparent 70%);
+    bottom: -80px;
+    left: -40px;
+    animation-direction: alternate-reverse;
+    animation-duration: 15s;
+}
+
+@keyframes orbMove {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(40px, -30px) scale(1.1);
+    }
+}
+
+.fade-in-up {
+    animation: fadeUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.login-alt-link {
+    margin-top: 0.85rem;
+    font-size: 0.85rem;
+    color: rgba(167, 139, 250, 0.6);
+}
+
+.login-alt-link a {
+    color: #a78bfa;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.login-alt-link a:hover {
+    color: #c4b5fd;
+    text-decoration: underline;
 }

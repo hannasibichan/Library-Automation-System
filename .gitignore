@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables - NEVER commit this!
+.env
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Frontend
+node_modules/
+build/
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

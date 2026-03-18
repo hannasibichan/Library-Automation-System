@@ -68,3 +68,28 @@
     color: #c4b5fd;
     text-decoration: underline;
 }
+
+/* ── Forgot-password label row ─────────────────────────── */
+.fp-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fp-label-row label {
+    margin-bottom: 0 !important;
+}
+
+.fp-inline-link {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(167, 139, 250, 0.65);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.01em;
+}
+
+.fp-inline-link:hover {
+    color: #a78bfa;
+    text-decoration: underline;
+}

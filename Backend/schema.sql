@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS book_record (
 -- Password hash for 'admin123' using bcrypt
 INSERT IGNORE INTO librarian (name, email, mobileno, password_hash)
 VALUES ('Admin Librarian', 'admin@library.com', '9999999999',
-        '$2b$12$KIXyM3nLhGp7FGX3JmRpPO9kT5e.PIFLdFrq0d6YoqXP5e7g8D3AS');
+        '$2b$12$L5i2sZCo77cCYp5tAGstV.lSvoHDkJRcMzB6rRNx6WHQr7iHlMmKe');
 
 -- Insert a default book_record entry
 INSERT IGNORE INTO book_record (lib_id, total_books_available)

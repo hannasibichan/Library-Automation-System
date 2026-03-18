@@ -1,9 +1,15 @@
 import bcrypt
+import secrets
+import time
 from flask import Blueprint, request, jsonify
 from app import get_db
 from utils.jwt_utils import generate_token, librarian_required
 
 auth_bp = Blueprint('auth', __name__)
+
+# ── In-memory password-reset store ────────────────────────────────────────────
+# { email: {'otp': str, 'expires': float, 'account_type': 'user'|'librarian'} }
+_reset_store: dict = {}
 
 
 def dict_cursor(connection):
@@ -145,3 +151,91 @@ def add_librarian():
         cur.close()
 
     return jsonify({'message': f'Librarian {name} added successfully', 'lib_id': lib_id}), 201
+
+
+# ─── Forgot Password ───────────────────────────────────────────────────────────
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data  = request.get_json()
+    email = data.get('email', '').strip().lower()
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    db  = get_db()
+    cur = dict_cursor(db)
+
+    # Check user table first
+    cur.execute('SELECT email FROM user WHERE email = %s', (email,))
+    user = cur.fetchone()
+
+    account_type = None
+    if user:
+        account_type = 'user'
+    else:
+        # Check librarian table
+        cur.execute('SELECT email FROM librarian WHERE email = %s', (email,))
+        lib = cur.fetchone()
+        if lib:
+            account_type = 'librarian'
+    cur.close()
+
+    if not account_type:
+        # Always return 200 to avoid email enumeration
+        return jsonify({'message': 'If that email is registered, a reset code has been sent.'}), 200
+
+    # Generate a 6-digit OTP valid for 15 minutes
+    otp = str(secrets.randbelow(900000) + 100000)  # 100000–999999
+    _reset_store[email] = {
+        'otp': otp,
+        'expires': time.time() + 900,   # 15 min
+        'account_type': account_type
+    }
+
+    # In production you would email this; for dev we return it directly
+    return jsonify({
+        'message': 'Reset code generated. Check your email.',
+        'reset_code': otp,          # expose for demo / development
+        'account_type': account_type
+    }), 200
+
+
+# ─── Reset Password ────────────────────────────────────────────────────────────
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    data         = request.get_json()
+    email        = data.get('email', '').strip().lower()
+    otp          = data.get('otp', '').strip()
+    new_password = data.get('new_password', '')
+
+    if not all([email, otp, new_password]):
+        return jsonify({'error': 'Email, reset code, and new password are required'}), 400
+    if len(new_password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+
+    record = _reset_store.get(email)
+    if not record:
+        return jsonify({'error': 'No reset request found for this email. Please request a new code.'}), 400
+    if time.time() > record['expires']:
+        _reset_store.pop(email, None)
+        return jsonify({'error': 'Reset code has expired. Please request a new one.'}), 400
+    if record['otp'] != otp:
+        return jsonify({'error': 'Invalid reset code.'}), 400
+
+    pw_hash = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
+    db  = get_db()
+    cur = dict_cursor(db)
+    try:
+        if record['account_type'] == 'user':
+            cur.execute('UPDATE user SET password_hash = %s WHERE email = %s', (pw_hash, email))
+        else:
+            cur.execute('UPDATE librarian SET password_hash = %s WHERE email = %s', (pw_hash, email))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cur.close()
+
+    _reset_store.pop(email, None)  # invalidate token after use
+    return jsonify({'message': 'Password reset successfully! You can now log in.'}), 200

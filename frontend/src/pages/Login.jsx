@@ -57,7 +57,10 @@ function Login() {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="login-password">Password</label>
+                        <div className="fp-label-row">
+                            <label htmlFor="login-password">Password</label>
+                            <Link to="/forgot-password" className="fp-inline-link" id="login-forgot-link">Forgot password?</Link>
+                        </div>
                         <input id="login-password" type="password" name="password"
                             placeholder="Enter your password"
                             value={form.password} onChange={handleChange} required />

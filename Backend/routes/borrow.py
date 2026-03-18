@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from utils.db import get_db
 from utils.jwt_utils import token_required
+from utils.fine_utils import calculate_gradual_fine
 import datetime
 
 borrow_bp = Blueprint('borrow', __name__)
@@ -81,12 +82,8 @@ def return_book(isbn):
         cur.close()
         return jsonify({'error': 'You have not borrowed this book'}), 403
 
-    # Calculate fine for overdue returns
-    now  = datetime.datetime.now()
-    fine = 0.00
-    if book['return_date'] and now > book['return_date']:
-        overdue_days = (now - book['return_date']).days
-        fine = round(overdue_days * FINE_PER_DAY, 2)
+    # Calculate tiered fine
+    fine = calculate_gradual_fine(book.get('return_date'))
 
     try:
         cur.execute(
@@ -125,14 +122,9 @@ def my_books():
     books = cur.fetchall()
     cur.close()
 
-    # Compute live fine for each book in case it's overdue
-    now = datetime.datetime.now()
+    # Compute live tiered fine for each book
     for b in books:
-        if b.get('return_date') and now > b['return_date']:
-            overdue_days = (now - b['return_date']).days
-            b['current_fine'] = round(overdue_days * FINE_PER_DAY, 2)
-        else:
-            b['current_fine'] = 0.00
+        b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
         # Ensure datetime fields are serialisable
         for field in ('date_taken', 'return_date'):
             if isinstance(b.get(field), datetime.datetime):

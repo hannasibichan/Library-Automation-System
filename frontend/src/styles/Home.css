@@ -31,15 +31,19 @@
 }
 
 .hero-orb-1 {
-    width: 600px; height: 600px;
+    width: 600px;
+    height: 600px;
     background: radial-gradient(circle, rgba(79, 70, 229, 0.12) 0%, transparent 65%);
-    top: -200px; right: -180px;
+    top: -200px;
+    right: -180px;
 }
 
 .hero-orb-2 {
-    width: 450px; height: 450px;
+    width: 450px;
+    height: 450px;
     background: radial-gradient(circle, rgba(22, 163, 74, 0.1) 0%, transparent 60%);
-    bottom: -150px; left: -150px;
+    bottom: -150px;
+    left: -150px;
 }
 
 /* Floating particles — subtle dots */
@@ -51,38 +55,53 @@
 }
 
 .p1 {
-    width: 6px; height: 6px;
+    width: 6px;
+    height: 6px;
     background: var(--brand);
-    top: 22%; left: 15%;
+    top: 22%;
+    left: 15%;
     animation: particleDrift 8s ease-in-out infinite;
 }
 
 .p2 {
-    width: 4px; height: 4px;
+    width: 4px;
+    height: 4px;
     background: var(--sage);
-    top: 55%; right: 20%;
+    top: 55%;
+    right: 20%;
     animation: particleDrift 10s ease-in-out infinite reverse;
 }
 
 .p3 {
-    width: 7px; height: 7px;
+    width: 7px;
+    height: 7px;
     background: var(--amber);
-    bottom: 25%; left: 55%;
+    bottom: 25%;
+    left: 55%;
     animation: particleDrift 9s ease-in-out infinite;
     animation-delay: -3s;
 }
 
 .p4 {
-    width: 5px; height: 5px;
+    width: 5px;
+    height: 5px;
     background: var(--coral);
-    top: 38%; right: 35%;
+    top: 38%;
+    right: 35%;
     animation: particleDrift 11s ease-in-out infinite reverse;
     animation-delay: -5s;
 }
 
 @keyframes particleDrift {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-15px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
 }
 
 .hero-content {
@@ -107,7 +126,8 @@
 }
 
 .hero-badge-dot {
-    width: 6px; height: 6px;
+    width: 6px;
+    height: 6px;
     background: var(--sage);
     border-radius: 50%;
     animation: pulse-dot 2s ease-in-out infinite;
@@ -142,7 +162,9 @@
     flex-wrap: wrap;
 }
 
-.hero-extra { margin-top: 1.5rem; }
+.hero-extra {
+    margin-top: 1.5rem;
+}
 
 .librarian-link {
     color: var(--ink-4);
@@ -154,7 +176,10 @@
     transition: color 0.15s;
 }
 
-.librarian-link:hover { color: var(--brand); border-bottom-color: var(--brand); }
+.librarian-link:hover {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+}
 
 /* ── Stats strip ── */
 .stats-strip {
@@ -176,7 +201,9 @@
     border-right: 1px solid var(--border);
 }
 
-.strip-stat:last-child { border-right: none; }
+.strip-stat:last-child {
+    border-right: none;
+}
 
 .strip-num {
     display: block;
@@ -253,9 +280,12 @@
 }
 
 .feature-icon-wrap {
-    width: 48px; height: 48px;
+    width: 48px;
+    height: 48px;
     border-radius: var(--radius-md);
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.5rem;
     margin-bottom: 1rem;
     background: var(--bg-alt);
@@ -291,8 +321,13 @@
     box-shadow: var(--shadow-md);
 }
 
-.cta-card::before { display: none; }
-.cta-orb { display: none; }
+.cta-card::before {
+    display: none;
+}
+
+.cta-orb {
+    display: none;
+}
 
 .cta-card h2 {
     font-family: 'Space Grotesk', sans-serif;
@@ -322,9 +357,26 @@
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
-    .stats-strip { flex-direction: column; align-items: center; gap: 1.25rem; }
-    .strip-stat { border-right: none; }
-    .cta-card { padding: 2.5rem 1.75rem; }
-    .hero { padding: 4rem 1.5rem 3rem; }
-    .hero-actions { flex-direction: column; align-items: center; }
+    .stats-strip {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .strip-stat {
+        border-right: none;
+    }
+
+    .cta-card {
+        padding: 2.5rem 1.75rem;
+    }
+
+    .hero {
+        padding: 4rem 1.5rem 3rem;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        align-items: center;
+    }
 }

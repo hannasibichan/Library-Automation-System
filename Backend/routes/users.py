@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from utils.db import get_db
 from utils.jwt_utils import token_required, librarian_required
+from utils.fine_utils import calculate_gradual_fine
 import bcrypt
 
 users_bp = Blueprint('users', __name__)
@@ -101,16 +102,8 @@ def my_profile():
         for field in ('date_taken', 'return_date'):
             if isinstance(b.get(field), datetime.datetime):
                 b[field] = b[field].isoformat()
-        # live fine computation
-        if b.get('return_date'):
-            rd = datetime.datetime.fromisoformat(b['return_date'])
-            if now > rd:
-                overdue_days = (now - rd).days
-                b['current_fine'] = round(overdue_days * FINE_PER_DAY, 2)
-            else:
-                b['current_fine'] = 0.00
-        else:
-            b['current_fine'] = 0.00
+        # live tiered fine computation
+        b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
 
     user['borrowed_books'] = books
     user['books_borrowed']  = len(books)

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import get_db
+from utils.db import get_db
 from utils.jwt_utils import librarian_required
 import datetime
 

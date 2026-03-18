@@ -11,12 +11,19 @@ function ProtectedRoute({ children, role }) {
 
     try {
         const user = JSON.parse(userStr);
-        if (role === "any") return children;
-        if (role === "librarian" && user.role !== "librarian") {
+        const userRole = (user.role || "").toLowerCase();
+        const requiredRole = (role || "").toLowerCase();
+
+        if (requiredRole === "any") return children;
+
+        if (requiredRole === "librarian" && userRole !== "librarian") {
             return <Navigate to="/librarian/login" replace />;
         }
-        if (role === "user" && user.role === "librarian") {
-            return <Navigate to="/librarian/dashboard" replace />;
+        if (requiredRole === "user" && (userRole === "student" || userRole === "faculty")) {
+            // Valid user
+        } else if (requiredRole === "user") {
+            // Not a student/faculty
+            return <Navigate to="/login" replace />;
         }
     } catch {
         localStorage.clear();

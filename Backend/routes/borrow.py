@@ -1,8 +1,12 @@
 from flask import Blueprint, request, jsonify
-from app import get_db
+from utils.db import get_db
 from utils.jwt_utils import token_required
+import datetime
 
 borrow_bp = Blueprint('borrow', __name__)
+
+BORROW_DAYS = 14          # loan period in days
+FINE_PER_DAY = 2.00       # ₹2 per overdue day
 
 
 def dc(conn):
@@ -35,8 +39,14 @@ def borrow_book(isbn):
         cur.close()
         return jsonify({'error': 'Borrow limit reached (max 5 books)'}), 400
 
+    now         = datetime.datetime.now()
+    return_date = now + datetime.timedelta(days=BORROW_DAYS)
+
     try:
-        cur.execute('UPDATE book SET user_id = %s WHERE ISBN = %s', (user_id, isbn))
+        cur.execute(
+            'UPDATE book SET user_id=%s, date_taken=%s, return_date=%s, fine=0.00 WHERE ISBN=%s',
+            (user_id, now, return_date, isbn)
+        )
         db.commit()
     except Exception as e:
         db.rollback()
@@ -44,7 +54,11 @@ def borrow_book(isbn):
     finally:
         cur.close()
 
-    return jsonify({'message': f'Book "{book["title"]}" borrowed successfully'}), 200
+    return jsonify({
+        'message':     f'Book "{book["title"]}" borrowed successfully',
+        'date_taken':  now.isoformat(),
+        'return_date': return_date.isoformat(),
+    }), 200
 
 
 # ─── Return a book ────────────────────────────────────────────────────────────
@@ -67,8 +81,18 @@ def return_book(isbn):
         cur.close()
         return jsonify({'error': 'You have not borrowed this book'}), 403
 
+    # Calculate fine for overdue returns
+    now  = datetime.datetime.now()
+    fine = 0.00
+    if book['return_date'] and now > book['return_date']:
+        overdue_days = (now - book['return_date']).days
+        fine = round(overdue_days * FINE_PER_DAY, 2)
+
     try:
-        cur.execute('UPDATE book SET user_id = NULL WHERE ISBN = %s', (isbn,))
+        cur.execute(
+            'UPDATE book SET user_id=NULL, date_taken=NULL, return_date=NULL, fine=%s WHERE ISBN=%s',
+            (fine, isbn)
+        )
         db.commit()
     except Exception as e:
         db.rollback()
@@ -76,7 +100,10 @@ def return_book(isbn):
     finally:
         cur.close()
 
-    return jsonify({'message': f'Book "{book["title"]}" returned successfully'}), 200
+    msg = f'Book "{book["title"]}" returned successfully'
+    if fine > 0:
+        msg += f'. Fine: ₹{fine:.2f}'
+    return jsonify({'message': msg, 'fine': fine}), 200
 
 
 # ─── My borrowed books ────────────────────────────────────────────────────────
@@ -97,4 +124,18 @@ def my_books():
     )
     books = cur.fetchall()
     cur.close()
+
+    # Compute live fine for each book in case it's overdue
+    now = datetime.datetime.now()
+    for b in books:
+        if b.get('return_date') and now > b['return_date']:
+            overdue_days = (now - b['return_date']).days
+            b['current_fine'] = round(overdue_days * FINE_PER_DAY, 2)
+        else:
+            b['current_fine'] = 0.00
+        # Ensure datetime fields are serialisable
+        for field in ('date_taken', 'return_date'):
+            if isinstance(b.get(field), datetime.datetime):
+                b[field] = b[field].isoformat()
+
     return jsonify(books), 200

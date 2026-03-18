@@ -34,9 +34,16 @@ CREATE TABLE IF NOT EXISTS book (
     publisher VARCHAR(150),
     lib_id INT,
     user_id INT DEFAULT NULL,
+    date_taken DATETIME DEFAULT NULL,
+    return_date DATETIME DEFAULT NULL,
+    fine DECIMAL(10,2) DEFAULT 0.00,
+    cover_image MEDIUMTEXT DEFAULT NULL,
     FOREIGN KEY (lib_id) REFERENCES librarian(lib_id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
+
+-- Migration: add cover_image column to existing book table (safe to run multiple times)
+ALTER TABLE book ADD COLUMN IF NOT EXISTS cover_image MEDIUMTEXT DEFAULT NULL;
 
 -- Book_record table (maintained by librarian)
 CREATE TABLE IF NOT EXISTS book_record (

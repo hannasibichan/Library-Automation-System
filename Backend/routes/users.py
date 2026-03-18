@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app import get_db
+from utils.db import get_db
 from utils.jwt_utils import token_required, librarian_required
 import bcrypt
 
@@ -52,6 +52,69 @@ def get_user(user_id):
     if user.get('created_at') and not isinstance(user['created_at'], str):
         user['created_at'] = user['created_at'].isoformat()
     user['borrowed_books'] = books
+    return jsonify(user), 200
+
+
+# ─── Full profile + borrowed books (for Profile page) ─────────────────────────
+@users_bp.route('/me/profile', methods=['GET'])
+@token_required
+def my_profile():
+    user_id = request.current_user.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'User only endpoint'}), 403
+
+    import datetime
+
+    db  = get_db()
+    cur = dc(db)
+
+    # User details
+    cur.execute(
+        'SELECT user_id, name, email, address, role, created_at FROM user WHERE user_id = %s',
+        (user_id,)
+    )
+    user = cur.fetchone()
+    if not user:
+        cur.close()
+        return jsonify({'error': 'User not found'}), 404
+
+    # Currently borrowed books with librarian info
+    cur.execute(
+        'SELECT b.ISBN, b.bookno, b.title, b.author, b.publisher, '
+        '       b.date_taken, b.return_date, b.fine, b.lib_id, '
+        '       l.name AS librarian_name '
+        'FROM book b '
+        'LEFT JOIN librarian l ON b.lib_id = l.lib_id '
+        'WHERE b.user_id = %s ORDER BY b.date_taken DESC',
+        (user_id,)
+    )
+    books = cur.fetchall()
+    cur.close()
+
+    # Serialise datetimes and compute live fine
+    if user.get('created_at') and not isinstance(user['created_at'], str):
+        user['created_at'] = user['created_at'].isoformat()
+
+    FINE_PER_DAY = 2.00
+    now = datetime.datetime.now()
+    for b in books:
+        for field in ('date_taken', 'return_date'):
+            if isinstance(b.get(field), datetime.datetime):
+                b[field] = b[field].isoformat()
+        # live fine computation
+        if b.get('return_date'):
+            rd = datetime.datetime.fromisoformat(b['return_date'])
+            if now > rd:
+                overdue_days = (now - rd).days
+                b['current_fine'] = round(overdue_days * FINE_PER_DAY, 2)
+            else:
+                b['current_fine'] = 0.00
+        else:
+            b['current_fine'] = 0.00
+
+    user['borrowed_books'] = books
+    user['books_borrowed']  = len(books)
+    user['borrow_limit']    = 5
     return jsonify(user), 200
 
 

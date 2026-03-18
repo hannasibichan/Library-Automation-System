@@ -1,9 +1,10 @@
 import bcrypt
 import secrets
-import timefrom flask 
-import Blueprint, request, jsonifyfrom app 
-import get_dbfrom utils.jwt_utils 
-import generate_token, librarian_required
+import time
+from flask import Blueprint, request, jsonify, current_app
+from flask_mail import Message
+from utils.db import get_db
+from utils.jwt_utils import generate_token, librarian_required
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -50,7 +51,7 @@ def register():
         cur.close()
 
     token = generate_token({'user_id': user_id, 'name': name, 'email': email, 'role': role})
-    return jsonify({'token': token, 'user': {'user_id': user_id, 'name': name, 'email': email, 'role': role}}), 201
+    return jsonify({'token': token, 'user': {'user_id': user_id, 'name': name, 'email': email, 'role': role, 'address': address}}), 201
 
 
 # ─── User Login ───────────────────────────────────────────────────────────────
@@ -78,7 +79,11 @@ def login():
     })
     return jsonify({
         'token': token,
-        'user': {'user_id': user['user_id'], 'name': user['name'], 'email': user['email'], 'role': user['role']}
+        'user': {
+            'user_id': user['user_id'], 'name': user['name'],
+            'email': user['email'],    'role': user['role'],
+            'address': user.get('address', '')
+        }
     }), 200
 
 
@@ -192,10 +197,44 @@ def forgot_password():
         'account_type': account_type
     }
 
-    # In production you would email this; for dev we return it directly
+    # Send Email
+    try:
+        from app import mail
+        msg = Message(
+            subject="🔐 Bibliotheca - Password Reset Code",
+            recipients=[email]
+        )
+        msg.html = f"""
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #6d28d9; margin: 0; font-size: 24px;">📖 Bibliotheca</h1>
+                <p style="color: #64748b; font-size: 14px;">Library Automation System</p>
+            </div>
+            
+            <div style="padding: 20px; background-color: #f8fafc; border-radius: 8px; text-align: center;">
+                <h2 style="color: #1e293b; margin-top: 0;">Password Reset Request</h2>
+                <p style="color: #475569; font-size: 16px;">You requested a code to reset your password. Use the code below:</p>
+                
+                <div style="margin: 25px 0; padding: 15px; background-color: #ffffff; border: 2px dashed #a78bfa; border-radius: 8px; display: inline-block;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #7c3aed;">{otp}</span>
+                </div>
+                
+                <p style="color: #94a3b8; font-size: 13px; margin-bottom: 0;">This code will expire in <b>15 minutes</b>.<br>If you didn't request this, you can safely ignore this email.</p>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
+                &copy; 2024 Bibliotheca Library Management. All rights reserved.
+            </div>
+        </div>
+        """
+        mail.send(msg)
+    except Exception as e:
+        # Log the error in production
+        print(f"Failed to send email: {e}")
+        return jsonify({'error': 'Failed to send reset email. Please try again later.'}), 500
+
     return jsonify({
-        'message': 'Reset code generated. Check your email.',
-        'reset_code': otp,          # expose for demo / development
+        'message': 'Reset code sent to your email.',
         'account_type': account_type
     }), 200
 

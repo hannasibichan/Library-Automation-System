@@ -7,7 +7,9 @@ function Navbar() {
     const location = useLocation();
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : null;
-    const isLib = user?.role === "librarian";
+    const userRole = (user?.role || "").toLowerCase();
+    const isLib = userRole === "librarian";
+    const isUser = userRole === "student" || userRole === "faculty";
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
@@ -73,7 +75,7 @@ function Navbar() {
             </button>
 
             <ul className={`navbar-links ${open ? "open" : ""}`}>
-                {user ? (isLib ? libLinks : userLinks) : guestLinks}
+                {user ? (isLib ? libLinks : isUser ? userLinks : guestLinks) : guestLinks}
             </ul>
 
             {user && (

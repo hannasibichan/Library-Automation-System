@@ -2,18 +2,39 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import { useToast } from "../components/Toast";
+import { SkeletonCard } from "../components/SkeletonLoader";
 import "../styles/Profile.css";
 
 const API = "http://localhost:5000/api";
 
+const fmtDate = (dt) =>
+    dt ? new Date(dt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
 function Profile() {
-    const toast = useToast();
-    const token = localStorage.getItem("token");
+    const toast  = useToast();
+    const token  = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
-    const user = userStr ? JSON.parse(userStr) : {};
+    const localUser = userStr ? JSON.parse(userStr) : {};
+
+    // Live profile data (includes borrowed books)
+    const [profile, setProfile] = useState(null);
+    const [loadingProfile, setLoadingProfile] = useState(true);
 
     const [pwForm, setPwForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
     const [pwLoading, setPwLoading] = useState(false);
+
+    useEffect(() => {
+        fetch(`${API}/users/me/profile`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                setProfile(data);
+            })
+            .catch(() => toast("Could not load profile details", "error"))
+            .finally(() => setLoadingProfile(false));
+    }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const user = profile || localUser;
 
     const initials = user?.name
         ? user.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
@@ -50,6 +71,9 @@ function Profile() {
         finally { setPwLoading(false); }
     };
 
+    const borrowedBooks = profile?.borrowed_books || [];
+    const booksCount    = profile?.books_borrowed ?? 0;
+
     return (
         <div className="page-wrapper">
             <Navbar />
@@ -63,21 +87,28 @@ function Profile() {
                         <div className="profile-meta">
                             <span className="role-badge">{user.role === "faculty" ? "🎓" : "📚"} {user.role}</span>
                             <span style={{ color: "rgba(200,190,255,0.55)", fontSize: "0.82rem" }}>{user.email}</span>
+                            {booksCount > 0 && (
+                                <span className={`chip ${booksCount >= 5 ? "danger" : "borrowed"}`}>
+                                    📖 {booksCount}/5 books borrowed
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
 
+                {/* Top two panels: Account Details + Change Password */}
                 <div className="profile-grid">
                     {/* Account details */}
                     <div className="profile-panel">
                         <h2 className="profile-panel-title">👤 Account Details</h2>
                         <div className="profile-detail-list">
                             {[
-                                ["Full Name", user.name || "—"],
-                                ["Email", user.email || "—"],
-                                ["Role", user.role || "—"],
-                                ["Address", user.address || "Not provided"],
-                                ["User ID", `#${user.user_id}`],
+                                ["Full Name",  user.name    || "—"],
+                                ["Email",      user.email   || "—"],
+                                ["Role",       user.role    || "—"],
+                                ["Address",    user.address || "Not provided"],
+                                ["User ID",    `#${user.user_id}`],
+                                ["Member Since", fmtDate(profile?.created_at || null)],
                             ].map(([k, v]) => (
                                 <div className="profile-detail-row" key={k}>
                                     <span className="profile-detail-key">{k}</span>
@@ -129,6 +160,117 @@ function Profile() {
                         </form>
                     </div>
                 </div>
+
+                {/* ── Borrower Details Section ─────────────────────────────── */}
+                <div className="borrower-section">
+                    <div className="section-header" style={{ marginBottom: "1.15rem" }}>
+                        <h2>📋 Borrower Details</h2>
+                        <span className={`chip ${booksCount >= 5 ? "danger" : booksCount > 0 ? "borrowed" : ""}`}>
+                            {booksCount} / 5 slots used
+                        </span>
+                    </div>
+
+                    {/* Borrow utilisation bar */}
+                    <div className="borrow-usage-bar" style={{ marginBottom: "1.75rem" }}>
+                        <div className="progress-wrap">
+                            <div
+                                className="progress-bar"
+                                style={{
+                                    width: `${(booksCount / 5) * 100}%`,
+                                    background: booksCount >= 5
+                                        ? "linear-gradient(90deg,#ef4444,#f87171)"
+                                        : undefined
+                                }}
+                            />
+                        </div>
+                        <p className="usage-hint">
+                            {booksCount === 0 && "You haven't borrowed any books yet."}
+                            {booksCount > 0 && booksCount < 5 && `You can still borrow ${5 - booksCount} more book${5 - booksCount !== 1 ? "s" : ""}.`}
+                            {booksCount >= 5 && "You've reached your borrowing limit. Return a book to borrow more."}
+                        </p>
+                    </div>
+
+                    {loadingProfile ? (
+                        <div className="borrowed-detail-list">
+                            {[1, 2].map(i => <SkeletonCard key={i} />)}
+                        </div>
+                    ) : borrowedBooks.length === 0 ? (
+                        <div className="empty-state">
+                            <span className="empty-icon">📭</span>
+                            <p>You haven't borrowed any books yet.</p>
+                            <Link to="/books" className="btn btn-violet" style={{ marginTop: "0.5rem" }}>
+                                Browse Catalog →
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="borrowed-detail-list">
+                            {borrowedBooks.map((book) => {
+                                const isOverdue = book.return_date && new Date(book.return_date) < new Date();
+                                const fine = book.current_fine > 0 ? book.current_fine : (book.fine ?? 0);
+                                return (
+                                    <div
+                                        className={`profile-borrow-card ${isOverdue ? "overdue" : ""}`}
+                                        key={book.ISBN}
+                                        id={`profile-book-${book.ISBN}`}
+                                    >
+                                        {/* Left: Thumbnail */}
+                                        <div className="pbc-cover">
+                                            {book.cover_image ? (
+                                                <img src={book.cover_image} alt={book.title} className="pbc-img" />
+                                            ) : (
+                                                <div className="pbc-placeholder">📚</div>
+                                            )}
+                                        </div>
+
+                                        {/* Right: Content */}
+                                        <div className="pbc-body">
+                                            <div className="pbc-header-row">
+                                                <span className="pbc-title">{book.title}</span>
+                                                <div className="pbc-badges">
+                                                    {isOverdue && <span className="chip danger" style={{ fontSize: "0.65rem" }}>⚠️ Overdue</span>}
+                                                    <span className="chip borrowed" style={{ fontSize: "0.65rem" }}>📖 Borrowed</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Subtitle meta */}
+                                            <div className="pbc-meta-row">
+                                                <span>✍️ {book.author}</span>
+                                                <span className="pbc-isbn">ISBN: {book.ISBN} · #{book.bookno}</span>
+                                            </div>
+
+                                            {/* ── Borrowing Details (maps to form section) ── */}
+                                            <div className="pbc-info-grid">
+                                                <div className="pbc-info-item">
+                                                    <span className="pbc-info-label">📅 Date Taken</span>
+                                                    <span className="pbc-info-value">{fmtDate(book.date_taken)}</span>
+                                                </div>
+                                                <div className="pbc-info-item">
+                                                    <span className="pbc-info-label">🔔 Return By</span>
+                                                    <span className={`pbc-info-value ${isOverdue ? "overdue-text" : ""}`}>
+                                                        {fmtDate(book.return_date)}
+                                                    </span>
+                                                </div>
+                                                <div className="pbc-info-item">
+                                                    <span className="pbc-info-label">💰 Fine</span>
+                                                    <span className={`pbc-info-value ${fine > 0 ? "fine-text" : ""}`}>
+                                                        {fine > 0 ? `₹${Number(fine).toFixed(2)}` : "₹0.00"}
+                                                    </span>
+                                                </div>
+                                                <div className="pbc-info-item">
+                                                    <span className="pbc-info-label">📚 Issued By</span>
+                                                    <span className="pbc-info-value">
+                                                        {book.librarian_name || (book.lib_id ? `Lib #${book.lib_id}` : "—")}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
             </div>
         </div>
     );

@@ -512,6 +512,8 @@ body {
     width: 100%; max-width: 520px;
     box-shadow: var(--shadow-xl);
     animation: enter 0.25s var(--spring) both;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }

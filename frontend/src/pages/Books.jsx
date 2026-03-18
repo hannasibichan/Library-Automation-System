@@ -15,8 +15,13 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                     <button className="modal-close" onClick={onClose}>✕</button>
                 </div>
 
+                {/* ── Cover + Title header ── */}
                 <div className="book-detail-header">
-                    <div className="book-cover-placeholder">📚</div>
+                    {book.cover_image ? (
+                        <img src={book.cover_image} alt={book.title} className="book-cover-real" />
+                    ) : (
+                        <div className="book-cover-placeholder">📚</div>
+                    )}
                     <div>
                         <div className="book-detail-title">{book.title}</div>
                         <div className="book-detail-author">by {book.author}</div>
@@ -29,18 +34,31 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
 
                 <div className="divider" style={{ margin: "1rem 0 0.5rem" }}></div>
 
+                {/* ── Book Information fields (maps 1-to-1 with Add Book form section) ── */}
+                <div className="book-detail-section-label">📖 Book Information</div>
                 {[
-                    ["ISBN", book.ISBN],
-                    ["Book No.", "#" + book.bookno],
-                    ["Publisher", book.publisher || "—"],
-                    ["Added by", book.librarian_name || "Library"],
-                    ["Status", book.user_id ? (isMyBook ? "Borrowed by you" : "Borrowed by another user") : "Available to borrow"],
+                    ["ISBN",        book.ISBN],
+                    ["Book No.",    "#" + book.bookno],
+                    ["Publisher",   book.publisher || "—"],
+                    ["Issued By",   book.librarian_name || "Library"],
                 ].map(([k, v]) => (
                     <div className="book-detail-row" key={k}>
                         <span className="book-detail-key">{k}</span>
                         <span className="book-detail-val">{v}</span>
                     </div>
                 ))}
+
+                {/* ── Availability row ── */}
+                <div className="book-detail-row">
+                    <span className="book-detail-key">Availability</span>
+                    <span className={`book-detail-val ${book.user_id ? "borrowed-text" : "available-text"}`}>
+                        {isMyBook
+                            ? "✅ Borrowed by you"
+                            : book.user_id
+                                ? "🔒 Currently unavailable"
+                                : "✅ Available to borrow"}
+                    </span>
+                </div>
 
                 <div className="modal-actions">
                     <button className="btn btn-outline" onClick={onClose}>Close</button>
@@ -174,9 +192,21 @@ function Books() {
                                 return (
                                     <div className="book-card" key={book.ISBN} id={`book-${book.ISBN}`}
                                         onClick={() => setDetail(book)}>
+
+                                        {/* Book cover image strip */}
+                                        {book.cover_image && (
+                                            <div className="book-card-cover">
+                                                <img src={book.cover_image} alt={book.title} className="book-card-cover-img" />
+                                                <span className={`avail-dot ${isBorrowed ? "borrowed" : "available"}`}
+                                                    style={{ position: "absolute", top: 8, right: 8 }} />
+                                            </div>
+                                        )}
+
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                                             <div className="book-card-title">{book.title}</div>
-                                            <span className={`avail-dot ${isBorrowed ? "borrowed" : "available"}`} style={{ flexShrink: 0, marginTop: 4 }}></span>
+                                            {!book.cover_image && (
+                                                <span className={`avail-dot ${isBorrowed ? "borrowed" : "available"}`} style={{ flexShrink: 0, marginTop: 4 }} />
+                                            )}
                                         </div>
                                         <div className="book-card-meta">
                                             <span className="chip">✍️ {book.author}</span>

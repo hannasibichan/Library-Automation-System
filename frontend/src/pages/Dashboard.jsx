@@ -60,7 +60,7 @@ function Dashboard() {
             setMyBooks(Array.isArray(b) ? b : []);
         }).catch(() => toast("Failed to load dashboard data", "error"))
             .finally(() => setLoading(false));
-    }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [token, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -144,17 +144,31 @@ function Dashboard() {
                     </div>
                 ) : (
                     <div className="books-grid">
-                        {myBooks.slice(0, 6).map(book => (
-                            <div className="book-card" key={book.ISBN}>
-                                <div className="book-card-title">{book.title}</div>
-                                <div className="book-card-meta">
-                                    <span className="chip">✍️ {book.author}</span>
-                                    {book.publisher && <span className="chip">🏢 {book.publisher}</span>}
-                                    <span className="chip borrowed">📖 Borrowed</span>
-                                </div>
-                                <div style={{ color: "rgba(200,190,255,0.45)", fontSize: "0.72rem" }}>ISBN: {book.ISBN}</div>
-                            </div>
-                        ))}
+                        {myBooks.slice(0, 4).map(book => {
+                            const isOverdue = book.return_date && new Date(book.return_date) < new Date();
+                            return (
+                                <Link to="/my-books" className="book-card-mini" key={book.ISBN}>
+                                    <div className="bcm-cover">
+                                        {book.cover_image ? (
+                                            <img src={book.cover_image} alt={book.title} className="bcm-img" />
+                                        ) : (
+                                            <div className="bcm-placeholder">📚</div>
+                                        )}
+                                    </div>
+                                    <div className="bcm-body">
+                                        <div className="bcm-title">{book.title}</div>
+                                        <div className="bcm-author">by {book.author}</div>
+                                        <div className="bcm-meta">
+                                            {isOverdue ? (
+                                                <span className="chip danger" style={{ fontSize: "0.65rem" }}>⚠️ Overdue</span>
+                                            ) : (
+                                                <span className="chip borrowed" style={{ fontSize: "0.65rem" }}>📖 Borrowed</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </Link>
+                            );
+                        })}
                     </div>
                 )}
             </div>

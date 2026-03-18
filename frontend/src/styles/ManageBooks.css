@@ -3,3 +3,106 @@
 .isbn-cell { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--ink-4); }
 .book-title-cell { font-weight: 600; color: var(--ink); max-width: 200px; }
 .form-readonly { opacity: 0.45; cursor: not-allowed; }
+.datetime-cell { white-space: nowrap; font-size: 0.8rem; color: var(--ink-3); }
+
+/* ── Wide modal (for Add/Edit book with many fields) */
+.modal-wide { max-width: 720px !important; }
+
+/* ── Two-column form grid */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+}
+@media (max-width: 580px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+/* ── Section label inside form */
+.form-section-label {
+    font-size: 0.75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--brand); margin-bottom: -0.25rem;
+    display: flex; align-items: center; gap: 0.4rem;
+}
+.form-section-label .field-hint {
+    font-weight: 400; text-transform: none; letter-spacing: 0;
+    color: var(--ink-4); font-size: 0.72rem;
+}
+
+/* ── Table thumbnail ──────────────────────────────────────────────────────── */
+.book-thumb-placeholder {
+    border-radius: var(--radius-sm);
+    background: var(--bg-alt);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem;
+    border: 1px solid var(--border);
+}
+.book-thumb-img {
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    border: 1px solid var(--border);
+    display: block;
+}
+
+/* ── Image Uploader ──────────────────────────────────────────────────────── */
+.img-uploader-wrap { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.img-drop-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    min-height: 130px;
+    cursor: pointer;
+    background: var(--bg-alt);
+    transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+    position: relative;
+}
+.img-drop-zone:hover,
+.img-drop-zone.drag-over {
+    border-color: var(--brand);
+    background: rgba(79,70,229,0.07);
+}
+.img-drop-zone.has-image {
+    border-style: solid;
+    border-color: var(--brand);
+    min-height: 180px;
+}
+
+.img-drop-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--ink-4);
+    font-size: 0.83rem;
+    pointer-events: none;
+    user-select: none;
+}
+.img-drop-icon { font-size: 1.8rem; margin-bottom: 0.15rem; }
+.img-drop-sub  { font-size: 0.72rem; color: var(--ink-4); opacity: 0.65; }
+
+.img-preview {
+    max-width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    display: block;
+}
+
+.img-uploader-actions { display: flex; gap: 0.55rem; flex-wrap: wrap; }
+
+/* ── Detail modal cover ───────────────────────────────────────────────────── */
+.detail-cover-wrap {
+    display: flex; justify-content: center;
+    margin-bottom: 1rem;
+}
+.detail-cover-img {
+    max-height: 200px;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+}

@@ -45,6 +45,7 @@ function Home() {
                 <div className="hero-particle p1"></div>
                 <div className="hero-particle p2"></div>
                 <div className="hero-particle p3"></div>
+                <div className="hero-particle p4"></div>
                 <div className="hero-orb hero-orb-1"></div>
                 <div className="hero-orb hero-orb-2"></div>
 
@@ -120,7 +121,7 @@ function Home() {
             </section>
 
             <footer className="home-footer">
-                <p>© 2025 <strong style={{ color: "#a78bfa" }}>Bibliotheca</strong> — Built with Flask, MySQL &amp; React</p>
+                <p>© 2025 <strong style={{ color: "#6366f1" }}>Bibliotheca</strong> — Built with Flask, MySQL &amp; React</p>
             </footer>
         </div>
     );

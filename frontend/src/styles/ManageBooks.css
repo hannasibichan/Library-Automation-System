@@ -1,22 +1,5 @@
-/* ManageBooks.css — librarian book management */
-
-.book-status-cell {
-    white-space: nowrap;
-}
-
-.isbn-cell {
-    font-family: 'Courier New', monospace;
-    font-size: 0.82rem;
-    color: rgba(200, 190, 255, 0.7);
-}
-
-.book-title-cell {
-    font-weight: 600;
-    color: #e2e0ff;
-    max-width: 200px;
-}
-
-.form-readonly {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
+/* ManageBooks v5 */
+.book-status-cell { white-space: nowrap; }
+.isbn-cell { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--ink-4); }
+.book-title-cell { font-weight: 600; color: var(--ink); max-width: 200px; }
+.form-readonly { opacity: 0.45; cursor: not-allowed; }

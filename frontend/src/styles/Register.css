@@ -1,20 +1,4 @@
-/* Register.css — specific multi-column tweaks for registration */
-.register-role-hint {
-    display: block;
-    font-size: 0.76rem;
-    color: rgba(167, 139, 250, 0.45);
-    margin-top: 0.35rem;
-    font-style: italic;
-    font-weight: 500;
-}
-
-.auth-form input::placeholder {
-    font-size: 0.85rem;
-    color: rgba(167, 139, 250, 0.3);
-}
-
-@media (max-width: 480px) {
-    .auth-form>div {
-        grid-template-columns: 1fr !important;
-    }
-}
+/* Register v5 */
+.register-role-hint { font-size: 0.74rem; color: var(--ink-4); margin-top: 0.3rem; font-style: italic; font-weight: 500; display: block; }
+.auth-form input::placeholder { color: var(--ink-4); font-size: 0.88rem; }
+@media (max-width: 480px) { .auth-form > div { grid-template-columns: 1fr !important; } }

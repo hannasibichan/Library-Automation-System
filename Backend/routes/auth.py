@@ -1,9 +1,9 @@
 import bcrypt
 import secrets
-import time
-from flask import Blueprint, request, jsonify
-from app import get_db
-from utils.jwt_utils import generate_token, librarian_required
+import timefrom flask 
+import Blueprint, request, jsonifyfrom app 
+import get_dbfrom utils.jwt_utils 
+import generate_token, librarian_required
 
 auth_bp = Blueprint('auth', __name__)
 

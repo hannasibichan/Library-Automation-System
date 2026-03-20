@@ -12,6 +12,7 @@ function Navbar() {
     const isUser = userRole === "student" || userRole === "faculty";
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [requestCount, setRequestCount] = useState(0);
 
     useEffect(() => {
         const handler = () => setScrolled(window.scrollY > 10);
@@ -21,6 +22,22 @@ function Navbar() {
 
     // Close menu on route change
     useEffect(() => setOpen(false), [location]);
+
+    useEffect(() => {
+        if (isLib) {
+            const fetchCount = () => {
+                fetch("http://localhost:5000/api/requests/count", {
+                    headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` }
+                })
+                .then(r => r.json())
+                .then(data => setRequestCount(data.count || 0))
+                .catch(() => {});
+            };
+            fetchCount();
+            const interval = setInterval(fetchCount, 60000); // refresh every minute
+            return () => clearInterval(interval);
+        }
+    }, [isLib]);
 
     const handleLogout = () => {
         sessionStorage.removeItem("token");
@@ -44,7 +61,14 @@ function Navbar() {
         <>
             <li><Link className={isActive("/librarian/dashboard")} to="/librarian/dashboard">🏠 Dashboard</Link></li>
             <li><Link className={isActive("/librarian/manage-books")} to="/librarian/manage-books">📖 Books</Link></li>
-            <li><Link className={isActive("/librarian/requests")} to="/librarian/requests">⏳ Requests</Link></li>
+            <li>
+                <Link className={isActive("/librarian/requests")} to="/librarian/requests" style={{ position: "relative" }}>
+                    ⏳ Requests
+                    {requestCount > 0 && (
+                        <span className="nav-badge">{requestCount}</span>
+                    )}
+                </Link>
+            </li>
             <li><Link className={isActive("/librarian/borrowed")} to="/librarian/borrowed">📖 Borrowed</Link></li>
             <li><Link className={isActive("/librarian/manage-records")} to="/librarian/manage-records">📊 Records</Link></li>
             <li><Link className={isActive("/librarian/manage-users")} to="/librarian/manage-users">👥 Users</Link></li>

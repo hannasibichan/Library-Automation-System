@@ -93,8 +93,56 @@ def send_reminder_email(mail, email, name, title, due_date, is_today=False):
     except Exception as e:
         print(f"Failed to send reminder to {email}: {e}")
 
+def notify_librarians_on_request(mail, user_name, book_title, expiry_time):
+    """
+    Sends an immediate email to all librarians when a user requests a book.
+    """
+    try:
+        load_dotenv_settings()
+        db = mysql.connector.connect(**DB_CONFIG)
+        cur = db.cursor(dictionary=True)
+        cur.execute("SELECT email FROM librarian")
+        librarians = cur.fetchall()
+        cur.close()
+        db.close()
+
+        if not librarians:
+            return
+
+        recipients = [l['email'] for l in librarians]
+        formatted_expiry = expiry_time.strftime('%H:%M %p')
+
+        msg = Message(
+            subject=f"🛎️ New Book Request: {book_title}",
+            recipients=recipients
+        )
+        
+        msg.html = f"""
+        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
+            <h2 style="color: #4f46e5; margin-top: 0;">🛎️ New Book Request</h2>
+            <p>Hello Librarian,</p>
+            <p><b>{user_name}</b> has just requested a book from the collection.</p>
+            
+            <div style="margin: 20px 0; padding: 20px; border-radius: 10px; background-color: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <p style="margin: 0; font-size: 14px; color: #64748b;">Requested Book:</p>
+                <p style="margin: 5px 0 15px; font-size: 18px; font-weight: bold; color: #1e293b;">"{book_title}"</p>
+                <p style="margin: 0; font-size: 14px; color: #64748b;">Must be picked up by:</p>
+                <p style="margin: 5px 0 0; font-size: 18px; font-weight: bold; color: #dc2626;">{formatted_expiry}</p>
+            </div>
+            
+            <p style="font-size: 14px; color: #475569;">Please log in to the Librarian Dashboard to manage this request.</p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+            <p style="font-size: 11px; color: #94a3b8; text-align: center;">Bibliotheca Library Automation System</p>
+        </div>
+        """
+        mail.send(msg)
+    except Exception as e:
+        print(f"Failed to notify librarians: {e}")
+
+
 # Helper for standalone DB connection
 def load_dotenv_settings():
+# ...
     global DB_CONFIG
     import os
     from dotenv import load_dotenv

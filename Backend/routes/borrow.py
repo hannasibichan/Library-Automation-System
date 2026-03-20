@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from utils.db import get_db
 from utils.jwt_utils import token_required, librarian_required
 from utils.fine_utils import calculate_gradual_fine
+from utils.notifications import notify_librarians_on_request
 import datetime
 
 borrow_bp = Blueprint('borrow', __name__)
@@ -56,6 +57,11 @@ def request_book(isbn):
             (user_id, expiry, now, isbn, book['bookno'])
         )
         db.commit()
+        
+        # 4. Notify librarians immediately
+        from app import mail
+        notify_librarians_on_request(mail, request.current_user.get('name'), book['title'], expiry)
+
     except Exception as e:
         db.rollback()
         return jsonify({'error': str(e)}), 500
@@ -242,3 +248,13 @@ def list_requests():
             r['request_expiry'] = r['request_expiry'].isoformat()
             
     return jsonify(_serialize(reqs)), 200
+
+@borrow_bp.route('/requests/count', methods=['GET'])
+@librarian_required
+def get_request_count():
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("SELECT COUNT(*) FROM book WHERE status = 'requested'")
+    count = cur.fetchone()[0]
+    cur.close()
+    return jsonify({'count': count}), 200

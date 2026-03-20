@@ -390,14 +390,15 @@ function ManageBooks() {
                                             />
                                         </div>
                                     ))}
-                                    <div className="form-group">
-                                        <label htmlFor="book-lib_id">Librarian ID</label>
-                                        <input id="book-lib_id" type="number" min="1"
-                                            placeholder="Auto-filled from session"
-                                            value={form.lib_id}
-                                            onChange={e => setForm({ ...form, lib_id: e.target.value })}
-                                        />
-                                    </div>
+                                    {editMode && (
+                                        <div className="form-group">
+                                            <label htmlFor="book-lib_id">Librarian ID (Manager)</label>
+                                            <input id="book-lib_id" type="number" min="1"
+                                                value={form.lib_id}
+                                                onChange={e => setForm({ ...form, lib_id: e.target.value })}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ── Cover Image ── */}
@@ -423,6 +424,7 @@ function ManageBooks() {
                                     <div className="form-group">
                                         <label htmlFor="book-date_taken">Date Taken</label>
                                         <input id="book-date_taken" type="datetime-local"
+                                            max={new Date().toISOString().slice(0, 16)}
                                             value={form.date_taken}
                                             onChange={e => setForm({ ...form, date_taken: e.target.value })}
                                         />
@@ -430,6 +432,7 @@ function ManageBooks() {
                                     <div className="form-group">
                                         <label htmlFor="book-return_date">Return Date (Due)</label>
                                         <input id="book-return_date" type="datetime-local"
+                                            min={form.date_taken}
                                             value={form.return_date}
                                             onChange={e => setForm({ ...form, return_date: e.target.value })}
                                         />

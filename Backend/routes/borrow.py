@@ -4,6 +4,7 @@ from utils.jwt_utils import token_required, librarian_required
 from utils.fine_utils import calculate_gradual_fine
 from utils.notifications import notify_librarians_on_request
 import datetime
+from utils.request_cleanup import cleanup_expired_requests
 
 borrow_bp = Blueprint('borrow', __name__)
 
@@ -212,6 +213,7 @@ def list_borrowed():
 def my_books():
     user_id = request.current_user.get('user_id')
     db  = get_db()
+    cleanup_expired_requests(db)
     cur = dc(db)
     cur.execute(
         'SELECT b.*, l.name AS librarian_name FROM book b '
@@ -226,8 +228,6 @@ def my_books():
     for b in books:
         if b['status'] == 'borrowed':
             b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
-        if isinstance(b.get('request_expiry'), datetime.datetime):
-            b['request_expiry'] = b['request_expiry'].isoformat()
             
     return jsonify(_serialize(books)), 200
 
@@ -237,6 +237,7 @@ def my_books():
 @librarian_required
 def list_requests():
     db  = get_db()
+    cleanup_expired_requests(db)
     cur = dc(db)
     cur.execute(
         "SELECT b.*, u.name AS user_name, u.email AS user_email FROM book b "
@@ -257,6 +258,7 @@ def list_requests():
 @librarian_required
 def get_request_count():
     db = get_db()
+    cleanup_expired_requests(db)
     cur = db.cursor()
     cur.execute("SELECT COUNT(*) FROM book WHERE status = 'requested'")
     count = cur.fetchone()[0]

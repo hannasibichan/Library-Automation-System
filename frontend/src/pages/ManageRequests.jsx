@@ -71,6 +71,10 @@ function ManageRequests() {
         return `${hrs}h ${mins % 60}m`;
     };
 
+    const isExpired = (expiry) => {
+        return (new Date(expiry) - new Date()) <= 0;
+    };
+
     return (
         <div className="page-wrapper">
             <Navbar />
@@ -127,17 +131,27 @@ function ManageRequests() {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="chip" style={{ 
-                                                background: "var(--amber-light)", 
-                                                color: "#92400E",
-                                                fontWeight: 700 
-                                            }}>
-                                                {getTimeRemaining(req.request_expiry)}
-                                            </span>
+                                            {(() => {
+                                                const expired = isExpired(req.request_expiry);
+                                                return (
+                                                    <span className="chip" style={{ 
+                                                        background: expired ? "var(--red-light)" : "var(--amber-light)", 
+                                                        color: expired ? "#991B1B" : "#92400E",
+                                                        fontWeight: 700 
+                                                    }}>
+                                                        {expired ? "Expired" : getTimeRemaining(req.request_expiry)}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td style={{ textAlign: "right" }}>
                                             <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
-                                                <button className="btn btn-green btn-sm" onClick={() => handleConfirm(req)}>
+                                                <button 
+                                                    className="btn btn-green btn-sm" 
+                                                    onClick={() => handleConfirm(req)}
+                                                    disabled={isExpired(req.request_expiry)}
+                                                    title={isExpired(req.request_expiry) ? "Cannot confirm expired request" : ""}
+                                                >
                                                     Confirm Pickup
                                                 </button>
                                                 <button className="btn btn-outline btn-sm" onClick={() => handleCancel(req)}>

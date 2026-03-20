@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from utils.db import get_db
 from utils.jwt_utils import librarian_required
 import datetime
+from utils.request_cleanup import cleanup_expired_requests
 
 records_bp = Blueprint('records', __name__)
 
@@ -110,6 +111,7 @@ def delete_record(record_id):
 @librarian_required
 def get_stats():
     db  = get_db()
+    cleanup_expired_requests(db)
     cur = dc(db)
 
     cur.execute('SELECT COUNT(*) AS total_books FROM book')

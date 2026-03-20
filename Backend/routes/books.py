@@ -54,7 +54,7 @@ def _save_image(base64_str):
 def _serialize(books_list):
     """Convert datetime fields to ISO strings and fix image paths."""
     for b in books_list:
-        for field in ('date_taken', 'return_date'):
+        for field in ('date_taken', 'return_date', 'date_requested', 'request_expiry', 'date_added'):
             if isinstance(b.get(field), datetime.datetime):
                 b[field] = b[field].isoformat()
         
@@ -126,7 +126,8 @@ def add_book():
     title     = data.get('title', '').strip()
     author    = data.get('author', '').strip()
     publisher = data.get('publisher', '').strip()
-    lib_id    = data.get('lib_id') or request.current_user['lib_id']
+    # Force the book to be added under the currently logged-in librarian's ID
+    lib_id    = request.current_user['lib_id']
     cover_image = data.get('cover_image')
     
     # Save image to file if provided
@@ -140,6 +141,21 @@ def add_book():
 
     if not all([isbn, bookno, title, author]):
         return jsonify({'error': 'ISBN, bookno, title, and author are required'}), 400
+
+    # Validation for dates
+    now = datetime.datetime.now()
+    if date_taken:
+        try:
+            dt_taken = datetime.datetime.fromisoformat(date_taken.replace('Z', ''))
+            if dt_taken > now:
+                return jsonify({'error': 'Date taken cannot be in the future'}), 400
+            
+            if return_date:
+                dt_return = datetime.datetime.fromisoformat(return_date.replace('Z', ''))
+                if dt_return < dt_taken:
+                    return jsonify({'error': 'Return date cannot be before date taken'}), 400
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
     # Determine status based on user_id
     status = 'borrowed' if user_id else 'available'
@@ -189,6 +205,21 @@ def update_book(isbn, bookno):
     date_taken  = data.get('date_taken') or None
     return_date = data.get('return_date') or None
     fine        = data.get('fine') if data.get('fine') is not None else 0.00
+
+    # Validation for dates
+    now = datetime.datetime.now()
+    if date_taken:
+        try:
+            dt_taken = datetime.datetime.fromisoformat(date_taken.replace('Z', ''))
+            if dt_taken > now:
+                return jsonify({'error': 'Date taken cannot be in the future'}), 400
+            
+            if return_date:
+                dt_return = datetime.datetime.fromisoformat(return_date.replace('Z', ''))
+                if dt_return < dt_taken:
+                    return jsonify({'error': 'Return date cannot be before date taken'}), 400
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
     # Save image to file if provided as base64
     image_filename = None

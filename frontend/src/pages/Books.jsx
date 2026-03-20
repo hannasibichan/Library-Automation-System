@@ -53,7 +53,7 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                     <span className="book-detail-key">Availability</span>
                     <span className={`book-detail-val ${book.user_id ? "borrowed-text" : "available-text"}`}>
                         {isMyBook
-                            ? "✅ Borrowed by you"
+                            ? (book.status === 'requested' ? "✅ Requested by you" : "✅ Borrowed by you")
                             : book.user_id
                                 ? "🔒 Currently unavailable"
                                 : "✅ Available to borrow"}
@@ -63,7 +63,9 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                 <div className="modal-actions">
                     <button className="btn btn-outline" onClick={onClose}>Close</button>
                     {isMyBook ? (
-                        <span className="chip borrowed" style={{ padding: "0.5rem 1rem" }}>You borrowed this</span>
+                        <span className={`chip ${book.status === 'requested' ? "" : "borrowed"}`} style={{ padding: "0.5rem 1rem" }}>
+                            {book.status === 'requested' ? "You requested this" : "You borrowed this"}
+                        </span>
                     ) : !book.user_id ? (
                         <button className="btn btn-green" id={`modal-borrow-${book.ISBN}`}
                             onClick={() => { onBorrow(book.ISBN, book.title); onClose(); }}>
@@ -116,17 +118,19 @@ function Books() {
         try {
             const res = await fetch(`${API}/borrow/${isbn}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
-            if (!res.ok) { toast(data.error || "Failed to borrow", "error"); return; }
-            toast(`"${title}" borrowed successfully!`, "success");
+            if (!res.ok) { toast(data.error || "Failed to request", "error"); return; }
+            toast(data.message || `"${title}" requested successfully!`, "success");
             fetchBooks(search);
         } catch { toast("Server error", "error"); }
     };
 
     // Filter
     const filtered = books.filter(b => {
-        if (activeFilter === "available") return !b.user_id;
-        if (activeFilter === "borrowed") return !!b.user_id;
-        if (activeFilter === "mine") return b.user_id === user.user_id;
+        if (activeFilter === "available") return b.status === 'available';
+        if (activeFilter === "borrowed") return b.status === 'borrowed';
+        if (activeFilter === "requested") return b.status === 'requested';
+        if (activeFilter === "my-requests") return b.user_id === user.user_id && b.status === 'requested';
+        if (activeFilter === "mine") return b.user_id === user.user_id && b.status === 'borrowed';
         return true;
     });
 
@@ -160,9 +164,11 @@ function Books() {
                 <div className="filter-chips">
                     {[
                         { key: "all", label: `All (${books.length})` },
-                        { key: "available", label: `Available (${books.filter(b => !b.user_id).length})` },
-                        { key: "borrowed", label: `Borrowed (${books.filter(b => !!b.user_id).length})` },
-                        { key: "mine", label: `My Borrows (${books.filter(b => b.user_id === user.user_id).length})` },
+                        { key: "available", label: `Available (${books.filter(b => b.status === 'available').length})` },
+                        { key: "requested", label: `Requested (${books.filter(b => b.status === 'requested').length})` },
+                        { key: "borrowed", label: `Borrowed (${books.filter(b => b.status === 'borrowed').length})` },
+                        { key: "my-requests", label: `My Requests (${books.filter(b => b.user_id === user.user_id && b.status === 'requested').length})` },
+                        { key: "mine", label: `My Borrows (${books.filter(b => b.user_id === user.user_id && b.status === 'borrowed').length})` },
                     ].map(f => (
                         <button key={f.key} className={`filter-chip ${activeFilter === f.key ? "active" : ""}`}
                             onClick={() => { setActiveFilter(f.key); setPage(1); }}>
@@ -187,7 +193,6 @@ function Books() {
                     <>
                         <div className="books-grid">
                             {paginated.map(book => {
-                                const isBorrowed = !!book.user_id;
                                 const isMyBook = book.user_id === user.user_id;
                                 return (
                                     <div className="book-card" key={book.bookno} id={`book-${book.bookno}`}
@@ -197,7 +202,7 @@ function Books() {
                                         {book.cover_image && (
                                             <div className="book-card-cover">
                                                 <img src={book.cover_image} alt={book.title} className="book-card-cover-img" />
-                                                <span className={`avail-dot ${isBorrowed ? "borrowed" : "available"}`}
+                                                <span className={`avail-dot ${book.status}`}
                                                     style={{ position: "absolute", top: 8, right: 8 }} />
                                             </div>
                                         )}
@@ -205,14 +210,14 @@ function Books() {
                                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                                             <div className="book-card-title">{book.title}</div>
                                             {!book.cover_image && (
-                                                <span className={`avail-dot ${isBorrowed ? "borrowed" : "available"}`} style={{ flexShrink: 0, marginTop: 4 }} />
+                                                <span className={`avail-dot ${book.status}`} style={{ flexShrink: 0, marginTop: 4 }} />
                                             )}
                                         </div>
                                         <div className="book-card-meta">
                                             <span className="chip">✍️ {book.author}</span>
                                             {book.publisher && <span className="chip">🏢 {book.publisher}</span>}
-                                            <span className={`chip ${isBorrowed ? "borrowed" : "available"}`}>
-                                                {isBorrowed ? "Borrowed" : "Available"}
+                                            <span className={`chip ${book.status}`}>
+                                                {book.status === 'requested' ? "⏳ Reserved" : book.status === 'available' ? "Available" : "Borrowed"}
                                             </span>
                                         </div>
                                         <div style={{ color: "var(--ink-4)", fontSize: "0.78rem", fontWeight: 600 }}>
@@ -220,14 +225,18 @@ function Books() {
                                         </div>
                                         <div className="book-card-actions" onClick={e => e.stopPropagation()}>
                                             {isMyBook ? (
-                                                <span className="chip borrowed">✔ You borrowed this</span>
-                                            ) : !isBorrowed ? (
+                                                <span className={`chip ${book.status === 'requested' ? "" : "borrowed"}`}>
+                                                    {book.status === 'requested' ? "⏳ Requested by you" : "✔ Borrowed by you"}
+                                                </span>
+                                            ) : book.status === 'available' ? (
                                                 <button className="btn btn-green btn-sm" id={`borrow-${book.ISBN}`}
                                                     onClick={() => handleBorrow(book.ISBN, book.title)}>
                                                     📥 Borrow
                                                 </button>
                                             ) : (
-                                                <span className="chip" style={{ opacity: 0.45 }}>Unavailable</span>
+                                                <span className="chip" style={{ opacity: 0.6 }}>
+                                                    {book.status === 'requested' ? "🔒 Reserved" : "Unavailable"}
+                                                </span>
                                             )}
                                             <button className="btn btn-ghost btn-sm" onClick={() => setDetail(book)}>Details</button>
                                         </div>

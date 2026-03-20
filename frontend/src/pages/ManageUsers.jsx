@@ -141,10 +141,18 @@ function ManageUsers() {
                                                             <div className="expanded-book-list">
                                                                 {expandedBooks[u.user_id].map(b => (
                                                                     <div className="expanded-book-item" key={b.ISBN}>
-                                                                        <span>📖</span>
-                                                                        <span style={{ fontWeight: 600, color: "#e2e0ff" }}>{b.title}</span>
-                                                                        <span style={{ color: "rgba(200,190,255,0.5)", fontSize: "0.78rem" }}>by {b.author}</span>
-                                                                        <span className="chip borrowed" style={{ fontSize: "0.7rem", marginLeft: "auto" }}>ISBN: {b.ISBN}</span>
+                                                                        <span style={{ fontSize: "0.9rem" }}>📖</span>
+                                                                        <span style={{ fontWeight: 600, color: "var(--ink)" }}>{b.title}</span>
+                                                                        <span style={{ color: "var(--ink-3)", fontSize: "0.78rem" }}>by {b.author}</span>
+                                                                        <span className="chip" style={{ 
+                                                                            fontSize: "0.7rem", 
+                                                                            marginLeft: "auto",
+                                                                            background: "var(--amber-light)",
+                                                                            color: "var(--amber)",
+                                                                            border: "1px solid #FEF08A"
+                                                                        }}>
+                                                                            ISBN: {b.ISBN}
+                                                                        </span>
                                                                     </div>
                                                                 ))}
                                                             </div>

@@ -25,7 +25,7 @@ def send_due_date_reminders(app, mail):
                     SELECT b.title, b.return_date, u.email, u.name 
                     FROM book b
                     JOIN user u ON b.user_id = u.user_id
-                    WHERE DATE(b.return_date) = %s
+                    WHERE DATE(b.return_date) = %s AND b.status = 'borrowed'
                 """
                 cur.execute(query, (target_date,))
                 reminders = cur.fetchall()
@@ -38,6 +38,29 @@ def send_due_date_reminders(app, mail):
             db.close()
         except Exception as e:
             print(f"Notification Task Error: {e}")
+
+def check_expired_reservations(app):
+    """
+    Releases books that were requested but not picked up within the time limit.
+    """
+    with app.app_context():
+        try:
+            load_dotenv_settings()
+            db = mysql.connector.connect(**DB_CONFIG)
+            cur = db.cursor()
+            
+            now = datetime.datetime.now()
+            query = "UPDATE book SET user_id=NULL, status='available', request_expiry=NULL WHERE status='requested' AND request_expiry < %s"
+            cur.execute(query, (now,))
+            
+            if cur.rowcount > 0:
+                print(f"Released {cur.rowcount} expired reservations.")
+                db.commit()
+                
+            cur.close()
+            db.close()
+        except Exception as e:
+            print(f"Reservation Expiry Task Error: {e}")
 
 def send_reminder_email(mail, email, name, title, due_date, is_today=False):
     formatted_date = due_date.strftime('%B %d, %Y')

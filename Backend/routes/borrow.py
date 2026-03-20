@@ -1,50 +1,59 @@
 from flask import Blueprint, request, jsonify
 from utils.db import get_db
-from utils.jwt_utils import token_required
+from utils.jwt_utils import token_required, librarian_required
 from utils.fine_utils import calculate_gradual_fine
 import datetime
 
 borrow_bp = Blueprint('borrow', __name__)
 
-BORROW_DAYS = 14          # loan period in days
-FINE_PER_DAY = 2.00       # ₹2 per overdue day
+BORROW_DAYS = 14               # loan period in days
+RESERVATION_HOURS = 4          # user has 4h to pick up the book
+FINE_PER_DAY = 2.00            # ₹2 per overdue day
 
 
 def dc(conn):
     return conn.cursor(dictionary=True)
 
 
-# ─── Borrow a book ────────────────────────────────────────────────────────────
+# ─── Request to borrow (User) ───────────────────────────────────────────────────
 @borrow_bp.route('/borrow/<isbn>', methods=['POST'])
 @token_required
-def borrow_book(isbn):
+def request_book(isbn):
     user_id = request.current_user.get('user_id')
     if not user_id:
-        return jsonify({'error': 'Only users can borrow books'}), 403
+        return jsonify({'error': 'Only users can request books'}), 403
 
     db  = get_db()
     cur = dc(db)
-    # Find any available copy of this ISBN
-    cur.execute('SELECT * FROM book WHERE ISBN = %s AND user_id IS NULL LIMIT 1', (isbn,))
+    
+    # 1. Check if user already has a REQUEST or BORROW for this ISBN
+    cur.execute('SELECT status FROM book WHERE ISBN = %s AND user_id = %s', (isbn, user_id))
+    existing = cur.fetchone()
+    if existing:
+        return jsonify({'error': f"You already have this book ({existing['status']})."}), 400
+
+    # 2. Find any available copy
+    cur.execute("SELECT * FROM book WHERE ISBN = %s AND status = 'available' LIMIT 1", (isbn,))
     book = cur.fetchone()
 
     if not book:
         cur.close()
         return jsonify({'error': 'No available copies left for this book.'}), 404
 
+    # 3. Check borrow limit (max 5)
     cur.execute('SELECT COUNT(*) AS cnt FROM book WHERE user_id = %s', (user_id,))
     count = cur.fetchone()['cnt']
     if count >= 5:
         cur.close()
         return jsonify({'error': 'Borrow limit reached (max 5 books)'}), 400
 
-    now         = datetime.datetime.now()
-    return_date = now + datetime.timedelta(days=BORROW_DAYS)
+    now    = datetime.datetime.now()
+    expiry = now + datetime.timedelta(hours=RESERVATION_HOURS)
 
     try:
         cur.execute(
-            'UPDATE book SET user_id=%s, date_taken=%s, return_date=%s, fine=0.00 WHERE ISBN=%s AND bookno=%s',
-            (user_id, now, return_date, isbn, book['bookno'])
+            "UPDATE book SET user_id=%s, status='requested', request_expiry=%s, date_requested=%s WHERE ISBN=%s AND bookno=%s",
+            (user_id, expiry, now, isbn, book['bookno'])
         )
         db.commit()
     except Exception as e:
@@ -54,10 +63,76 @@ def borrow_book(isbn):
         cur.close()
 
     return jsonify({
-        'message':     f'Book "{book["title"]}" borrowed successfully',
-        'date_taken':  now.isoformat(),
-        'return_date': return_date.isoformat(),
+        'message': f'Book "{book["title"]}" requested! Please pick it up by {expiry.strftime("%I:%M %p")}.',
+        'request_expiry': expiry.isoformat(),
     }), 200
+
+
+# ─── Confirm Borrow (Librarian) ────────────────────────────────────────────────
+@borrow_bp.route('/confirm-borrow/<isbn>/<bookno>/<user_id>', methods=['POST'])
+@librarian_required
+def confirm_borrow(isbn, bookno, user_id):
+    db  = get_db()
+    cur = dc(db)
+    
+    cur.execute("SELECT * FROM book WHERE ISBN = %s AND bookno = %s", (isbn, bookno))
+    book = cur.fetchone()
+    
+    if not book:
+        return jsonify({'error': 'Book not found'}), 404
+    if book['status'] != 'requested' or str(book['user_id']) != str(user_id):
+        return jsonify({'error': 'No active request found for this user/book'}), 400
+
+    now         = datetime.datetime.now()
+    return_date = now + datetime.timedelta(days=BORROW_DAYS)
+
+    try:
+        cur.execute(
+            "UPDATE book SET status='borrowed', date_taken=%s, return_date=%s, request_expiry=NULL, fine=0.00 WHERE ISBN=%s AND bookno=%s",
+            (now, return_date, isbn, bookno)
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cur.close()
+
+    return jsonify({'message': f'Borrow confirmed for {book["title"]}'}), 200
+
+
+# ─── Cancel Request (User or Librarian) ───────────────────────────────────────
+@borrow_bp.route('/cancel-request/<isbn>/<bookno>', methods=['POST'])
+@token_required
+def cancel_request(isbn, bookno):
+    user_id = request.current_user.get('user_id')
+    lib_id  = request.current_user.get('lib_id')
+
+    db  = get_db()
+    cur = dc(db)
+    cur.execute("SELECT * FROM book WHERE ISBN=%s AND bookno=%s", (isbn, bookno))
+    book = cur.fetchone()
+
+    if not book:
+        return jsonify({'error': 'Book not found'}), 404
+    
+    # Check permission: User can cancel own, Librarian can cancel any
+    if not lib_id and book['user_id'] != user_id:
+        return jsonify({'error': 'Permission denied'}), 403
+
+    try:
+        cur.execute(
+            "UPDATE book SET user_id=NULL, status='available', request_expiry=NULL WHERE ISBN=%s AND bookno=%s",
+            (isbn, bookno)
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cur.close()
+
+    return jsonify({'message': 'Request cancelled successfully.'}), 200
 
 
 # ─── Return a book ────────────────────────────────────────────────────────────
@@ -65,8 +140,7 @@ def borrow_book(isbn):
 @token_required
 def return_book(isbn, bookno):
     user_id = request.current_user.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Only users can return books'}), 403
+    lib_id  = request.current_user.get('lib_id')
 
     db  = get_db()
     cur = dc(db)
@@ -76,17 +150,18 @@ def return_book(isbn, bookno):
     if not book:
         cur.close()
         return jsonify({'error': 'Book not found'}), 404
-    if book['user_id'] != user_id:
-        cur.close()
-        return jsonify({'error': 'You have not borrowed this book'}), 403
 
-    # Calculate tiered fine
+    # Permission check: librarian or the user who borrowed it
+    if not lib_id and book['user_id'] != user_id:
+        cur.close()
+        return jsonify({'error': 'Permission denied'}), 403
+
     fine = calculate_gradual_fine(book.get('return_date'))
 
     try:
         cur.execute(
-            'UPDATE book SET user_id=NULL, date_taken=NULL, return_date=NULL, fine=%s WHERE ISBN=%s AND bookno=%s',
-            (fine, isbn, bookno)
+            "UPDATE book SET status='available', user_id=NULL, date_taken=NULL, return_date=NULL, fine=0 WHERE ISBN=%s AND bookno=%s",
+            (isbn, bookno)
         )
         db.commit()
     except Exception as e:
@@ -95,20 +170,37 @@ def return_book(isbn, bookno):
     finally:
         cur.close()
 
-    msg = f'Book "{book["title"]}" returned successfully'
-    if fine > 0:
-        msg += f'. Fine: ₹{fine:.2f}'
-    return jsonify({'message': msg, 'fine': fine}), 200
+    return jsonify({'message': 'Book returned successfully', 'fine': fine}), 200
 
 
-# ─── My borrowed books ────────────────────────────────────────────────────────
+# ─── List currently borrowed (Librarian) ───────────────────────────────────────
+@borrow_bp.route('/borrowed', methods=['GET'])
+@token_required
+@librarian_required
+def list_borrowed():
+    db  = get_db()
+    cur = dc(db)
+    # Join with users to see borrower details
+    cur.execute("""
+        SELECT b.ISBN, b.bookno, b.title, b.author, b.user_id, b.date_taken, b.return_date, b.fine,
+               u.name AS user_name, u.email AS user_email
+        FROM book b
+        JOIN user u ON b.user_id = u.user_id
+        WHERE b.status = 'borrowed'
+        ORDER BY b.return_date ASC
+    """)
+    borrowed = cur.fetchall()
+    cur.close()
+    
+    from .books import _serialize
+    return jsonify(_serialize(borrowed)), 200
+
+
+# ─── My books (Including Requests) ────────────────────────────────────────────
 @borrow_bp.route('/my-books', methods=['GET'])
 @token_required
 def my_books():
     user_id = request.current_user.get('user_id')
-    if not user_id:
-        return jsonify({'error': 'Only users can access this'}), 403
-
     db  = get_db()
     cur = dc(db)
     cur.execute(
@@ -121,8 +213,32 @@ def my_books():
     cur.close()
 
     from .books import _serialize
-    # Compute live tiered fine for each book
     for b in books:
-        b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
-
+        if b['status'] == 'borrowed':
+            b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
+        if isinstance(b.get('request_expiry'), datetime.datetime):
+            b['request_expiry'] = b['request_expiry'].isoformat()
+            
     return jsonify(_serialize(books)), 200
+
+
+# ─── List all requests (Librarian) ─────────────────────────────────────────────
+@borrow_bp.route('/requests', methods=['GET'])
+@librarian_required
+def list_requests():
+    db  = get_db()
+    cur = dc(db)
+    cur.execute(
+        "SELECT b.*, u.name AS user_name, u.email AS user_email FROM book b "
+        "JOIN user u ON b.user_id = u.user_id "
+        "WHERE b.status = 'requested' ORDER BY b.request_expiry"
+    )
+    reqs = cur.fetchall()
+    cur.close()
+    
+    from .books import _serialize
+    for r in reqs:
+        if isinstance(r.get('request_expiry'), datetime.datetime):
+            r['request_expiry'] = r['request_expiry'].isoformat()
+            
+    return jsonify(_serialize(reqs)), 200

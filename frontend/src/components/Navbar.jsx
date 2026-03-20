@@ -44,6 +44,8 @@ function Navbar() {
         <>
             <li><Link className={isActive("/librarian/dashboard")} to="/librarian/dashboard">🏠 Dashboard</Link></li>
             <li><Link className={isActive("/librarian/manage-books")} to="/librarian/manage-books">📖 Books</Link></li>
+            <li><Link className={isActive("/librarian/requests")} to="/librarian/requests">⏳ Requests</Link></li>
+            <li><Link className={isActive("/librarian/borrowed")} to="/librarian/borrowed">📖 Borrowed</Link></li>
             <li><Link className={isActive("/librarian/manage-records")} to="/librarian/manage-records">📊 Records</Link></li>
             <li><Link className={isActive("/librarian/manage-users")} to="/librarian/manage-users">👥 Users</Link></li>
             <li><Link className={isActive("/profile")} to="/profile">👤 Profile</Link></li>

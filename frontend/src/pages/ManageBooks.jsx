@@ -211,6 +211,20 @@ function ManageBooks() {
         } catch { toast("Server error", "error"); }
     };
 
+    const handleReturnBook = async (book) => {
+        if (!window.confirm(`Mark "${book.title}" (No: ${book.bookno}) as returned?`)) return;
+        try {
+            const res = await fetch(`${API}/return/${book.ISBN}/${book.bookno}`, { 
+                method: "POST", 
+                headers: { Authorization: `Bearer ${token}` } 
+            });
+            const data = await res.json();
+            if (!res.ok) { toast(data.error || "Failed to return", "error"); return; }
+            toast(data.fine > 0 ? `Returned! Fine: ₹${data.fine}` : "Book returned successfully", "success");
+            fetchBooks(search);
+        } catch { toast("Server error", "error"); }
+    };
+
     const handleDelete = async (isbn, bookno) => {
         try {
             const res  = await fetch(`${API}/books/${isbn}/${bookno}`, { method: "DELETE", headers });
@@ -322,6 +336,11 @@ function ManageBooks() {
                                         </td>
                                         <td>
                                             <div style={{ display: "flex", gap: "0.5rem" }}>
+                                                {b.status === 'borrowed' && (
+                                                    <button className="btn btn-green btn-sm" onClick={() => handleReturnBook(b)}>
+                                                        📥 Return
+                                                    </button>
+                                                )}
                                                 <button className="btn btn-ghost btn-sm" onClick={() => setDetailBook(b)}>🔍</button>
                                                 <button className="btn btn-yellow btn-sm" id={`edit-${b.bookno}`} onClick={() => openEdit(b)}>✏️ Edit</button>
                                                 <button className="btn btn-red    btn-sm" id={`delete-${b.bookno}`} onClick={() => setDelConfirm(b)}>🗑️</button>

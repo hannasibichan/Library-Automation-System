@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from flask_mail import Mail
 from flask_apscheduler import APScheduler
 from utils.db import close_db
-from utils.notifications import send_due_date_reminders
+from utils.notifications import send_due_date_reminders, check_expired_reservations
 
 # Load env variables from .env file
 load_dotenv()
@@ -35,11 +35,16 @@ def create_app():
         scheduler.init_app(app)
         scheduler.start()
         
-        # Schedule the notification task to run every day
+        # 1. Schedule the notification task to run every day
         @scheduler.task('interval', id='due_date_job', days=1)
         def scheduled_notification_job():
             send_due_date_reminders(app, mail)
             print("Due Date Notification Task Executed Successfully.")
+            
+        # 2. Schedule the reservation expiry task to run every 10 minutes
+        @scheduler.task('interval', id='reservation_expiry_job', minutes=10)
+        def scheduled_reservation_job():
+            check_expired_reservations(app)
 
     # Global CORS policy for dev - Ensuring headers are always present
     CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]}}, supports_credentials=True)

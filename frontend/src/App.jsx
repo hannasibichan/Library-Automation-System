@@ -13,6 +13,8 @@ import MyBooks from "./pages/MyBooks";
 import ManageBooks from "./pages/ManageBooks";
 import ManageRecords from "./pages/ManageRecords";
 import ManageUsers from "./pages/ManageUsers";
+import ManageRequests from "./pages/ManageRequests";
+import ManageBorrowed from "./pages/ManageBorrowed";
 import Profile from "./pages/Profile";
 import AddLibrarian from "./pages/AddLibrarian";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -70,6 +72,12 @@ function App() {
                     } />
                     <Route path="/librarian/manage-users" element={
                         <ProtectedRoute role="librarian"><ManageUsers /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/requests" element={
+                        <ProtectedRoute role="librarian"><ManageRequests /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/borrowed" element={
+                        <ProtectedRoute role="librarian"><ManageBorrowed /></ProtectedRoute>
                     } />
                     <Route path="/librarian/add-librarian" element={
                         <ProtectedRoute role="librarian"><AddLibrarian /></ProtectedRoute>

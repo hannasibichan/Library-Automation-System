@@ -16,6 +16,7 @@ import ManageUsers from "./pages/ManageUsers";
 import Profile from "./pages/Profile";
 import AddLibrarian from "./pages/AddLibrarian";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 import { ToastProvider } from "./components/Toast";
 
 function App() {
@@ -23,13 +24,23 @@ function App() {
         <ToastProvider>
             <BrowserRouter>
                 <Routes>
-                    {/* Public */}
+                    {/* Public/Guest Routes */}
                     <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/librarian/login" element={<LibrarianLogin />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/login" element={
+                        <PublicRoute><Login /></PublicRoute>
+                    } />
+                    <Route path="/register" element={
+                        <PublicRoute><Register /></PublicRoute>
+                    } />
+                    <Route path="/librarian/login" element={
+                        <PublicRoute><LibrarianLogin /></PublicRoute>
+                    } />
+                    <Route path="/forgot-password" element={
+                        <PublicRoute><ForgotPassword /></PublicRoute>
+                    } />
+                    <Route path="/reset-password" element={
+                        <PublicRoute><ResetPassword /></PublicRoute>
+                    } />
 
                     {/* Shared/User-protected (accessible by both) */}
                     <Route path="/profile" element={

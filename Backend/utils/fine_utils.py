@@ -2,10 +2,9 @@ import datetime
 
 def calculate_gradual_fine(return_date):
     """
-    Calculates a tiered fine based on how many days the book is overdue.
-    - Tier 1 (1-7 days): ₹2/day
-    - Tier 2 (8-14 days): ₹5/day
-    - Tier 3 (15+ days): ₹10/day
+    Calculates a fine with a fixed base fee plus a daily increment.
+    - Base Fine: ₹100
+    - Daily Increment: ₹5/day after return date
     """
     if not return_date:
         return 0.00
@@ -13,6 +12,9 @@ def calculate_gradual_fine(return_date):
     # Ensure return_date is a datetime object
     if isinstance(return_date, str):
         try:
+            # Handle potential 'Z' in some formats
+            if return_date.endswith('Z'):
+                return_date = return_date[:-1]
             return_date = datetime.datetime.fromisoformat(return_date)
         except ValueError:
             return 0.00
@@ -22,18 +24,18 @@ def calculate_gradual_fine(return_date):
         return 0.00
         
     days_overdue = (now - return_date).days
-    if days_overdue <= 0:
-        return 0.00
-        
-    total_fine = 0.00
     
-    # Calculate fine based on tiers
-    for day in range(1, days_overdue + 1):
-        if day <= 7:
-            total_fine += 2.00
-        elif day <= 14:
-            total_fine += 5.00
-        else:
-            total_fine += 10.00
+    # If it is same day but later time, (now - return_date).days might be 0.
+    # We should calculate as (seconds // (24*3600)) or just handle 0 accurately.
+    # Typically, part of a day counts as 1 day late.
+    
+    # To be precise on days:
+    if days_overdue <= 0 and now > return_date:
+        days_overdue = 1
+    elif days_overdue <= 0:
+        return 0.00
+
+    # Fixed base fine 100 + 5 per day after return date
+    total_fine = 100.00 + (5.00 * days_overdue)
             
     return round(total_fine, 2)

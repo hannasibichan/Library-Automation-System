@@ -29,8 +29,8 @@ function LibrarianLogin() {
                 setLoading(false);
                 return;
             }
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
+            sessionStorage.setItem("token", data.token);
+            sessionStorage.setItem("user", JSON.stringify(data.user));
             toast(`Librarian Session Started: ${data.user.name}`, "success");
             navigate("/librarian/dashboard");
         } catch {

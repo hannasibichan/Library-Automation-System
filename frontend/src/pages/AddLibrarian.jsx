@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useToast } from "../components/Toast";
 import "../styles/AddLibrarian.css";
 
@@ -7,8 +7,7 @@ const API = "http://localhost:5000/api";
 
 function AddLibrarian() {
     const toast = useToast();
-    const navigate = useNavigate();
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     const [form, setForm] = useState({ name: "", email: "", mobileno: "", password: "", confirm: "" });
     const [loading, setLoading] = useState(false);

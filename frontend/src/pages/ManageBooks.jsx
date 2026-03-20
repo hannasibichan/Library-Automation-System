@@ -9,7 +9,7 @@ const API = "http://localhost:5000/api";
 const EMPTY = {
     ISBN: "", bookno: "", title: "", author: "", publisher: "",
     lib_id: "", user_id: "", date_taken: "", return_date: "", fine: "",
-    cover_image: "",
+    cover_image: "", originalBookNo: "", originalISBN: "",
 };
 
 const fmtDate = (dt) =>
@@ -36,18 +36,38 @@ function ImageUploader({ value, onChange }) {
     const inputRef = useRef(null);
     const [dragOver, setDragOver] = useState(false);
 
-    const processFile = (file) => {
+    const compressImage = (dataUrl, quality = 0.7, maxWidth = 800) => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.src = dataUrl;
+        });
+    };
+
+    const processFile = async (file) => {
         if (!file) return;
         if (!file.type.startsWith("image/")) {
             alert("Please select an image file (jpg, png, webp, etc.)");
             return;
         }
-        if (file.size > 2 * 1024 * 1024) {
-            alert("Image must be under 2 MB.");
-            return;
-        }
+        
         const reader = new FileReader();
-        reader.onload = (e) => onChange(e.target.result);
+        reader.onload = async (e) => {
+            const compressed = await compressImage(e.target.result);
+            onChange(compressed);
+        };
         reader.readAsDataURL(file);
     };
 
@@ -109,7 +129,7 @@ function ImageUploader({ value, onChange }) {
 
 function ManageBooks() {
     const toast = useToast();
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -117,7 +137,7 @@ function ManageBooks() {
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(EMPTY);
     const [delConfirm, setDelConfirm] = useState(null);
-    const [selected, setSelected] = useState([]);
+    const [selected, setSelected] = useState([]); // Keep state for now but remove UI
     const [detailBook, setDetailBook] = useState(null);
     const debounceRef = useRef(null);
 
@@ -159,6 +179,8 @@ function ManageBooks() {
             return_date: b.return_date ? b.return_date.slice(0, 16) : "",
             fine: b.fine ?? "",
             cover_image: b.cover_image || "",
+            originalBookNo: b.bookno,
+            originalISBN: b.ISBN,
         });
         setEditMode(true);
         setModal(true);
@@ -175,9 +197,9 @@ function ManageBooks() {
             fine:        form.fine        !== "" ? Number(form.fine)     : 0,
             cover_image: form.cover_image || null,
         };
-        const url    = editMode ? `${API}/books/${form.ISBN}` : `${API}/books`;
+        const url    = editMode ? `${API}/books/${form.originalISBN}/${form.originalBookNo}` : `${API}/books`;
         const method = editMode ? "PUT" : "POST";
-        const currentToken = localStorage.getItem("token");
+        const currentToken = sessionStorage.getItem("token");
         const fetchHeaders = { ...headers, Authorization: `Bearer ${currentToken}` };
         try {
             const res  = await fetch(url, { method, headers: fetchHeaders, body: JSON.stringify(payload) });
@@ -189,9 +211,9 @@ function ManageBooks() {
         } catch { toast("Server error", "error"); }
     };
 
-    const handleDelete = async (isbn) => {
+    const handleDelete = async (isbn, bookno) => {
         try {
-            const res  = await fetch(`${API}/books/${isbn}`, { method: "DELETE", headers });
+            const res  = await fetch(`${API}/books/${isbn}/${bookno}`, { method: "DELETE", headers });
             const data = await res.json();
             if (!res.ok) { toast(data.error || "Error", "error"); return; }
             toast("Book deleted!", "success");
@@ -204,8 +226,8 @@ function ManageBooks() {
         if (!window.confirm(`Are you sure you want to delete ${selected.length} books?`)) return;
         setLoading(true);
         try {
-            for (const isbn of selected) {
-                await fetch(`${API}/books/${isbn}`, { method: "DELETE", headers });
+            for (const b of selected) {
+                await fetch(`${API}/books/${b.ISBN}/${b.bookno}`, { method: "DELETE", headers });
             }
             toast(`${selected.length} books deleted!`, "success");
             fetchBooks(search);
@@ -217,12 +239,14 @@ function ManageBooks() {
 
     const toggleSelectAll = () => {
         if (selected.length === books.length) setSelected([]);
-        else setSelected(books.map(b => b.ISBN));
+        else setSelected(books.map(b => ({ ISBN: b.ISBN, bookno: b.bookno })));
     };
 
-    const toggleSelect = (isbn) => {
-        if (selected.includes(isbn)) setSelected(selected.filter(i => i !== isbn));
-        else setSelected([...selected, isbn]);
+    const toggleSelect = (book) => {
+        const key = { ISBN: book.ISBN, bookno: book.bookno };
+        const exists = selected.some(s => s.ISBN === key.ISBN && s.bookno === key.bookno);
+        if (exists) setSelected(selected.filter(s => !(s.ISBN === key.ISBN && s.bookno === key.bookno)));
+        else setSelected([...selected, key]);
     };
 
     return (
@@ -232,14 +256,7 @@ function ManageBooks() {
 
                 <div className="section-header">
                     <h2>📚 Manage Books</h2>
-                    <div style={{ display: "flex", gap: "0.75rem" }}>
-                        {selected.length > 0 && (
-                            <button className="btn btn-red" onClick={handleBulkDelete}>
-                                🗑️ Delete Selected ({selected.length})
-                            </button>
-                        )}
                         <button className="btn btn-violet" id="add-book-btn" onClick={openAdd}>+ Add Book</button>
-                    </div>
                 </div>
 
                 <div className="search-bar">
@@ -261,9 +278,6 @@ function ManageBooks() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th style={{ width: 40 }}>
-                                        <input type="checkbox" checked={selected.length === books.length && books.length > 0} onChange={toggleSelectAll} />
-                                    </th>
                                     <th style={{ width: 56 }}>Cover</th>
                                     <th>ISBN</th><th>Book#</th><th>Title</th><th>Author</th>
                                     <th>Publisher</th><th>Lib ID</th><th>Status</th>
@@ -273,10 +287,7 @@ function ManageBooks() {
                             </thead>
                             <tbody>
                                 {books.map((b, i) => (
-                                    <tr key={b.ISBN} style={{ animationDelay: `${i * 0.03}s` }} className="fade-in-row">
-                                        <td>
-                                            <input type="checkbox" checked={selected.includes(b.ISBN)} onChange={() => toggleSelect(b.ISBN)} />
-                                        </td>
+                                    <tr key={`${b.ISBN}-${b.bookno}`} style={{ animationDelay: `${i * 0.03}s` }} className="fade-in-row">
                                         <td>
                                             <BookThumb src={b.cover_image} size={38} />
                                         </td>
@@ -312,8 +323,8 @@ function ManageBooks() {
                                         <td>
                                             <div style={{ display: "flex", gap: "0.5rem" }}>
                                                 <button className="btn btn-ghost btn-sm" onClick={() => setDetailBook(b)}>🔍</button>
-                                                <button className="btn btn-yellow btn-sm" id={`edit-${b.ISBN}`} onClick={() => openEdit(b)}>✏️ Edit</button>
-                                                <button className="btn btn-red    btn-sm" id={`delete-${b.ISBN}`} onClick={() => setDelConfirm(b)}>🗑️</button>
+                                                <button className="btn btn-yellow btn-sm" id={`edit-${b.bookno}`} onClick={() => openEdit(b)}>✏️ Edit</button>
+                                                <button className="btn btn-red    btn-sm" id={`delete-${b.bookno}`} onClick={() => setDelConfirm(b)}>🗑️</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -492,7 +503,7 @@ function ManageBooks() {
                         </p>
                         <div className="modal-actions">
                             <button className="btn btn-outline" onClick={() => setDelConfirm(null)}>Cancel</button>
-                            <button className="btn btn-red" id="confirm-delete-btn" onClick={() => handleDelete(delConfirm.ISBN)}>Yes, Delete</button>
+                            <button className="btn btn-red" id="confirm-delete-btn" onClick={() => handleDelete(delConfirm.ISBN, delConfirm.bookno)}>Yes, Delete</button>
                         </div>
                     </div>
                 </div>

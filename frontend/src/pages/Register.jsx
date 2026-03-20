@@ -39,8 +39,8 @@ function Register() {
                 setLoading(false);
                 return;
             }
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data.user));
+            sessionStorage.setItem("token", data.token);
+            sessionStorage.setItem("user", JSON.stringify(data.user));
             toast("Account created! Welcome to Bibliotheca.", "success");
             navigate("/dashboard");
         } catch {

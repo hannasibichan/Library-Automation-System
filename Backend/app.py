@@ -44,6 +44,16 @@ def create_app():
     # Global CORS policy for dev - Ensuring headers are always present
     CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]}}, supports_credentials=True)
 
+    # Serve static uploads
+    import pathlib
+    uploads_dir = pathlib.Path(__file__).parent / 'uploads'
+    uploads_dir.mkdir(exist_ok=True)
+    
+    from flask import send_from_directory
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        return send_from_directory(uploads_dir, filename)
+
     # Register DB cleanup
     app.teardown_appcontext(close_db)
 

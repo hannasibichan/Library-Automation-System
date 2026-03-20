@@ -63,7 +63,7 @@
     letter-spacing: 0.04em;
 }
 
-.navbar-username { color: var(--ink-3); font-size: 0.84rem; font-weight: 500; }
+.navbar-username { color: var(--ink); font-size: 0.84rem; font-weight: 600; }
 
 .navbar-logout {
     background: var(--bg-alt);

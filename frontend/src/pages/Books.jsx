@@ -80,8 +80,8 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
 
 function Books() {
     const toast = useToast();
-    const token = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
+    const token = sessionStorage.getItem("token");
+    const userStr = sessionStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : {};
 
     const [books, setBooks] = useState([]);
@@ -190,7 +190,7 @@ function Books() {
                                 const isBorrowed = !!book.user_id;
                                 const isMyBook = book.user_id === user.user_id;
                                 return (
-                                    <div className="book-card" key={book.ISBN} id={`book-${book.ISBN}`}
+                                    <div className="book-card" key={book.bookno} id={`book-${book.bookno}`}
                                         onClick={() => setDetail(book)}>
 
                                         {/* Book cover image strip */}
@@ -216,7 +216,7 @@ function Books() {
                                             </span>
                                         </div>
                                         <div style={{ color: "rgba(200,190,255,0.45)", fontSize: "0.72rem" }}>
-                                            ISBN: {book.ISBN}
+                                            ISBN: {book.ISBN} | No: {book.bookno}
                                         </div>
                                         <div className="book-card-actions" onClick={e => e.stopPropagation()}>
                                             {isMyBook ? (

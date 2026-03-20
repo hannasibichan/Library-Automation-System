@@ -10,12 +10,59 @@ def dc(conn):
     return conn.cursor(dictionary=True)
 
 
+import os
+import base64
+import uuid
+
+def _save_image(base64_str):
+    """Saves base64 image string to a file and returns the filename."""
+    if not base64_str or not isinstance(base64_str, str):
+        return None
+    
+    # If it's already a filename (doesn't contain base64 signature), return as is
+    if not base64_str.startswith('data:image'):
+        # Check if it's just raw base64 (very long, no spaces)
+        if len(base64_str) > 100 and ',' not in base64_str:
+            pass # We'll try to process it as raw base64 below
+        else:
+            return base64_str
+
+    try:
+        if ',' in base64_str:
+            header, encoded = base64_str.split(",", 1)
+            ext = header.split("/")[1].split(";")[0] # e.g. 'png'
+        else:
+            encoded = base64_str
+            ext = 'png' # default
+            
+        data = base64.b64decode(encoded)
+        filename = f"{uuid.uuid4()}.{ext}"
+        
+        # Ensure uploads folder exists
+        uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
+        if not os.path.exists(uploads_dir):
+            os.makedirs(uploads_dir)
+            
+        filepath = os.path.join(uploads_dir, filename)
+        with open(filepath, "wb") as f:
+            f.write(data)
+        return filename
+    except Exception as e:
+        print(f"Error saving image: {e}")
+        return None
+
 def _serialize(books_list):
-    """Convert datetime fields to ISO strings for JSON serialisation."""
+    """Convert datetime fields to ISO strings and fix image paths."""
     for b in books_list:
         for field in ('date_taken', 'return_date'):
             if isinstance(b.get(field), datetime.datetime):
                 b[field] = b[field].isoformat()
+        
+        # If cover_image is a filename, prepend the storage path
+        img = b.get('cover_image')
+        if img and not img.startswith('data:image') and not img.startswith('http'):
+            b['cover_image'] = f"http://localhost:5000/uploads/{img}"
+            
     return books_list
 
 
@@ -50,21 +97,21 @@ def get_books():
     return jsonify(_serialize(books)), 200
 
 
-# ─── Get single book ──────────────────────────────────────────────────────────
-@books_bp.route('/<isbn>', methods=['GET'])
-def get_book(isbn):
+# ─── Get single book by Book No. ──────────────────────────────────────────
+@books_bp.route('/copy/<bookno>', methods=['GET'])
+def get_book_by_no(bookno):
     db  = get_db()
     cur = dc(db)
     cur.execute(
         'SELECT b.*, l.name AS librarian_name, u.name AS borrowed_by '
         'FROM book b LEFT JOIN librarian l ON b.lib_id = l.lib_id '
-        'LEFT JOIN user u ON b.user_id = u.user_id WHERE b.ISBN = %s',
-        (isbn,)
+        'LEFT JOIN user u ON b.user_id = u.user_id WHERE b.bookno = %s',
+        (bookno,)
     )
     book = cur.fetchone()
     cur.close()
     if not book:
-        return jsonify({'error': 'Book not found'}), 404
+        return jsonify({'error': 'Book copy not found'}), 404
     _serialize([book])
     return jsonify(book), 200
 
@@ -80,7 +127,10 @@ def add_book():
     author    = data.get('author', '').strip()
     publisher = data.get('publisher', '').strip()
     lib_id    = data.get('lib_id') or request.current_user['lib_id']
-    cover_image = data.get('cover_image') or None
+    cover_image = data.get('cover_image')
+    
+    # Save image to file if provided
+    image_filename = _save_image(cover_image)
 
     # Optional borrow fields (when adding a book that is already borrowed)
     user_id     = data.get('user_id') or None
@@ -97,7 +147,7 @@ def add_book():
         cur.execute(
             'INSERT INTO book (ISBN, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image) '
             'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (isbn, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image)
+            (isbn, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, image_filename)
         )
         cur.execute(
             'UPDATE book_record SET total_books_available = total_books_available + 1, '
@@ -108,7 +158,7 @@ def add_book():
     except Exception as e:
         db.rollback()
         if 'Duplicate entry' in str(e) or '1062' in str(e):
-            return jsonify({'error': 'ISBN or bookno already exists'}), 409
+            return jsonify({'error': 'Book No. already exists. Each copy must have a unique book number.'}), 409
         return jsonify({'error': str(e)}), 500
     finally:
         cur.close()
@@ -116,17 +166,17 @@ def add_book():
     return jsonify({'message': 'Book added successfully'}), 201
 
 
-# ─── Update book (librarian only) ─────────────────────────────────────────────
-@books_bp.route('/<isbn>', methods=['PUT'])
+# ─── Update book copy (librarian only) ─────────────────────────────────────────
+@books_bp.route('/<isbn>/<bookno>', methods=['PUT'])
 @librarian_required
-def update_book(isbn):
+def update_book(isbn, bookno):
     data      = request.get_json()
     title     = data.get('title', '').strip()
     author    = data.get('author', '').strip()
     publisher = data.get('publisher', '').strip()
     bookno    = data.get('bookno', '').strip()
     lib_id    = data.get('lib_id') or request.current_user['lib_id']
-    cover_image = data.get('cover_image')  # None means no change sent; empty string means clear
+    cover_image = data.get('cover_image')
 
     # Optional borrow fields – librarian can manually set/clear them
     user_id     = data.get('user_id') or None
@@ -134,14 +184,23 @@ def update_book(isbn):
     return_date = data.get('return_date') or None
     fine        = data.get('fine') if data.get('fine') is not None else 0.00
 
+    # Save image to file if provided as base64
+    image_filename = None
+    if cover_image:
+        if cover_image.startswith('data:image') or (len(cover_image) > 100 and ',' not in cover_image):
+            image_filename = _save_image(cover_image)
+        else:
+            image_filename = cover_image # Keep existing filename
+
     db  = get_db()
     cur = dc(db)
     try:
         cur.execute(
-            'UPDATE book SET title=%s, author=%s, publisher=%s, bookno=%s, lib_id=%s, '
-            'user_id=%s, date_taken=%s, return_date=%s, fine=%s, cover_image=%s WHERE ISBN=%s',
-            (title, author, publisher, bookno, lib_id,
-             user_id, date_taken, return_date, fine, cover_image, isbn)
+            'UPDATE book SET title=%s, author=%s, publisher=%s, ISBN=%s, bookno=%s, lib_id=%s, '
+            'user_id=%s, date_taken=%s, return_date=%s, fine=%s, cover_image=%s '
+            'WHERE ISBN=%s AND bookno=%s',
+            (title, author, publisher, data.get('ISBN', '').strip(), data.get('bookno', '').strip(), lib_id,
+              user_id, date_taken, return_date, fine, image_filename, isbn, bookno)
         )
         cur.execute(
             'UPDATE book_record SET update_record = %s WHERE lib_id = %s ORDER BY book_record_id DESC LIMIT 1',
@@ -157,15 +216,15 @@ def update_book(isbn):
     return jsonify({'message': 'Book updated successfully'}), 200
 
 
-# ─── Delete book (librarian only) ─────────────────────────────────────────────
-@books_bp.route('/<isbn>', methods=['DELETE'])
+# ─── Delete book copy (librarian only) ─────────────────────────────────────────
+@books_bp.route('/<isbn>/<bookno>', methods=['DELETE'])
 @librarian_required
-def delete_book(isbn):
+def delete_book(isbn, bookno):
     lib_id = request.current_user['lib_id']
     db  = get_db()
     cur = dc(db)
     try:
-        cur.execute('DELETE FROM book WHERE ISBN = %s', (isbn,))
+        cur.execute('DELETE FROM book WHERE ISBN = %s AND bookno = %s', (isbn, bookno))
         cur.execute(
             'UPDATE book_record SET total_books_available = GREATEST(total_books_available - 1, 0), '
             'delete_record = %s WHERE lib_id = %s ORDER BY book_record_id DESC LIMIT 1',

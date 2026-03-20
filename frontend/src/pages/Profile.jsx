@@ -12,8 +12,8 @@ const fmtDate = (dt) =>
 
 function Profile() {
     const toast  = useToast();
-    const token  = localStorage.getItem("token");
-    const userStr = localStorage.getItem("user");
+    const token  = sessionStorage.getItem("token");
+    const userStr = sessionStorage.getItem("user");
     const localUser = userStr ? JSON.parse(userStr) : {};
 
     // Live profile data (includes borrowed books)
@@ -23,12 +23,17 @@ function Profile() {
     const [pwForm, setPwForm] = useState({ current_password: "", new_password: "", confirm_password: "" });
     const [pwLoading, setPwLoading] = useState(false);
 
+    const [editModal, setEditModal] = useState(false);
+    const [editForm, setEditForm] = useState({ name: "", email: "", address: "" });
+    const [editLoading, setEditLoading] = useState(false);
+
     useEffect(() => {
         fetch(`${API}/users/me/profile`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => r.json())
             .then(data => {
                 if (data.error) throw new Error(data.error);
                 setProfile(data);
+                setEditForm({ name: data.name, email: data.email, address: data.address || "" });
             })
             .catch(() => toast("Could not load profile details", "error"))
             .finally(() => setLoadingProfile(false));
@@ -71,6 +76,29 @@ function Profile() {
         finally { setPwLoading(false); }
     };
 
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        setEditLoading(true);
+        try {
+            const res = await fetch(`${API}/users/me/profile`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify(editForm),
+            });
+            const data = await res.json();
+            if (!res.ok) { toast(data.error || "Update failed", "error"); return; }
+            
+            toast("Profile updated!", "success");
+            setEditModal(false);
+            // Refresh local profile
+            setProfile({ ...profile, ...editForm });
+            // Update sessionStorage
+            const updatedUser = { ...localUser, ...editForm };
+            sessionStorage.setItem("user", JSON.stringify(updatedUser));
+        } catch { toast("Server error", "error"); }
+        finally { setEditLoading(false); }
+    };
+
     const borrowedBooks = profile?.borrowed_books || [];
     const booksCount    = profile?.books_borrowed ?? 0;
 
@@ -85,9 +113,9 @@ function Profile() {
                     <div className="profile-info">
                         <h1 className="profile-name">{user.name}</h1>
                         <div className="profile-meta">
-                            <span className="role-badge">{user.role === "faculty" ? "🎓" : "📚"} {user.role}</span>
-                            <span style={{ color: "rgba(200,190,255,0.55)", fontSize: "0.82rem" }}>{user.email}</span>
-                            {booksCount > 0 && (
+                            <span className="role-badge">{user.role === "librarian" ? "🛡️" : user.role === "faculty" ? "🎓" : "📚"} {user.role}</span>
+                            <span style={{ color: "var(--ink-4)", fontSize: "0.75rem", fontWeight: 500 }}>{user.email}</span>
+                            {user.role !== "librarian" && booksCount > 0 && (
                                 <span className={`chip ${booksCount >= 5 ? "danger" : "borrowed"}`}>
                                     📖 {booksCount}/5 books borrowed
                                 </span>
@@ -100,14 +128,20 @@ function Profile() {
                 <div className="profile-grid">
                     {/* Account details */}
                     <div className="profile-panel">
-                        <h2 className="profile-panel-title">👤 Account Details</h2>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem", paddingBottom: "0.85rem", borderBottom: "1px solid var(--border)" }}>
+                            <h2 className="profile-panel-title" style={{ margin: 0, border: "none", padding: 0, fontSize: "1.1rem" }}>👤 Account Details</h2>
+                            <button className="btn btn-violet btn-sm" onClick={() => setEditModal(true)} 
+                                    style={{ borderRadius: "8px", padding: "6px 14px", fontSize: "0.82rem", boxShadow: "0 4px 12px rgba(79,70,229,0.2)" }}>
+                                ✏️ Edit Profile
+                            </button>
+                        </div>
                         <div className="profile-detail-list">
                             {[
                                 ["Full Name",  user.name    || "—"],
                                 ["Email",      user.email   || "—"],
                                 ["Role",       user.role    || "—"],
-                                ["Address",    user.address || "Not provided"],
-                                ["User ID",    `#${user.user_id}`],
+                                ["Address",    user.role === "librarian" ? (user.address || "Contact: " + user.email) : (user.address || "Not provided")],
+                                ["Account ID", user.role === "librarian" ? `#Lib ${user.lib_id}` : `#User ${user.user_id}`],
                                 ["Member Since", fmtDate(profile?.created_at || null)],
                             ].map(([k, v]) => (
                                 <div className="profile-detail-row" key={k}>
@@ -117,9 +151,11 @@ function Profile() {
                             ))}
                         </div>
 
-                        <div style={{ marginTop: "1.5rem" }}>
-                            <Link to="/my-books" className="btn btn-outline btn-sm">📚 View My Books</Link>
-                        </div>
+                        {user.role !== "librarian" && (
+                            <div style={{ marginTop: "1.5rem" }}>
+                                <Link to="/my-books" className="btn btn-outline btn-sm">📚 View My Books</Link>
+                            </div>
+                        )}
                     </div>
 
                     {/* Change password */}
@@ -161,7 +197,8 @@ function Profile() {
                     </div>
                 </div>
 
-                {/* ── Borrower Details Section ─────────────────────────────── */}
+                {/* ── Borrower Details Section (Only for users) ─────────────────────────────── */}
+                {user.role !== "librarian" && (
                 <div className="borrower-section">
                     <div className="section-header" style={{ marginBottom: "1.15rem" }}>
                         <h2>📋 Borrower Details</h2>
@@ -270,8 +307,75 @@ function Profile() {
                         </div>
                     )}
                 </div>
+                )}
 
-            </div>
+            </div> {/* end dashboard-content */}
+
+            {/* ── Edit Profile Modal (OUTSIDE dashboard-content) ── */}
+            {editModal && (
+                <div className="modal-overlay" style={{ zIndex: 10000, background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(6px)" }}>
+                    <div className="modal-content profile-edit-modal fade-in-up" 
+                         style={{ 
+                            maxWidth: "480px", width: "95%", padding: "2.5rem", 
+                            background: "#ffffff", borderRadius: "1.5rem", 
+                            color: "#1e293b", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                            border: "1px solid rgba(255,255,255,0.8)",
+                            position: "relative"
+                         }}>
+                        <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div>
+                                <h2 style={{ margin: 0, color: "#0f172a", fontSize: "1.6rem", fontWeight: 800, letterSpacing: "-0.02em" }}>Edit Profile</h2>
+                                <p style={{ margin: "0.35rem 0 0", color: "#64748b", fontSize: "0.9rem" }}>Update your personal workspace details</p>
+                            </div>
+                            <button className="close-btn" onClick={() => setEditModal(false)} 
+                                    style={{ background: "#f1f5f9", border: "none", width: "36px", height: "36px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s" }}>
+                                <span style={{ fontSize: "1.2rem", color: "#64748b" }}>✕</span>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                            <div className="form-group">
+                                <label style={{ display: "block", marginBottom: "0.6rem", color: "#334155", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Full Name</label>
+                                <input type="text" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} required 
+                                    style={{ width: "100%", padding: "0.9rem 1.1rem", borderRadius: "12px", border: "1.5px solid #e2e8f0", background: "#f8fafc", color: "#0f172a", fontSize: "1rem", transition: "all 0.2s" }}
+                                    placeholder="Enter your full name" />
+                            </div>
+
+                            <div className="form-group">
+                                <label style={{ display: "block", marginBottom: "0.6rem", color: "#334155", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Email Address</label>
+                                <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} required 
+                                    style={{ width: "100%", padding: "0.9rem 1.1rem", borderRadius: "12px", border: "1.5px solid #e2e8f0", background: "#f8fafc", color: "#0f172a", fontSize: "1rem", transition: "all 0.2s" }}
+                                    placeholder="email@example.com" />
+                            </div>
+
+                            <div className="form-group">
+                                <label style={{ display: "block", marginBottom: "0.6rem", color: "#334155", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                    {user.role === "librarian" ? "Mobile Number" : "Street Address"}
+                                </label>
+                                <input type="text" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} 
+                                    style={{ width: "100%", padding: "0.9rem 1.1rem", borderRadius: "12px", border: "1.5px solid #e2e8f0", background: "#f8fafc", color: "#0f172a", fontSize: "1rem", transition: "all 0.2s" }}
+                                    placeholder={user.role === "librarian" ? "Contact Number" : "Your residential address"} />
+                            </div>
+
+                            <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                                <button type="button" className="btn btn-ghost" style={{ flex: 1, padding: "0.9rem", borderRadius: "12px", fontWeight: 600 }} onClick={() => setEditModal(false)}>
+                                    Discard
+                                </button>
+                                <button type="submit" className="btn-primary" 
+                                        style={{ 
+                                            flex: 1.5, padding: "0.9rem", borderRadius: "12px", 
+                                            background: "linear-gradient(135deg, #4f46e5 0%, #3730a3 100%)", 
+                                            color: "#fff", border: "none", fontWeight: 700, 
+                                            boxShadow: "0 10px 15px -3px rgba(79, 70, 229, 0.3)" 
+                                        }} 
+                                        disabled={editLoading}>
+                                    {editLoading ? "Updating..." : "Save Changes"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

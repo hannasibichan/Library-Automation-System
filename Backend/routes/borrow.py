@@ -24,15 +24,13 @@ def borrow_book(isbn):
 
     db  = get_db()
     cur = dc(db)
-    cur.execute('SELECT * FROM book WHERE ISBN = %s', (isbn,))
+    # Find any available copy of this ISBN
+    cur.execute('SELECT * FROM book WHERE ISBN = %s AND user_id IS NULL LIMIT 1', (isbn,))
     book = cur.fetchone()
 
     if not book:
         cur.close()
-        return jsonify({'error': 'Book not found'}), 404
-    if book['user_id'] is not None:
-        cur.close()
-        return jsonify({'error': 'Book is already borrowed'}), 409
+        return jsonify({'error': 'No available copies left for this book.'}), 404
 
     cur.execute('SELECT COUNT(*) AS cnt FROM book WHERE user_id = %s', (user_id,))
     count = cur.fetchone()['cnt']
@@ -45,8 +43,8 @@ def borrow_book(isbn):
 
     try:
         cur.execute(
-            'UPDATE book SET user_id=%s, date_taken=%s, return_date=%s, fine=0.00 WHERE ISBN=%s',
-            (user_id, now, return_date, isbn)
+            'UPDATE book SET user_id=%s, date_taken=%s, return_date=%s, fine=0.00 WHERE bookno=%s',
+            (user_id, now, return_date, book['bookno'])
         )
         db.commit()
     except Exception as e:
@@ -63,16 +61,16 @@ def borrow_book(isbn):
 
 
 # ─── Return a book ────────────────────────────────────────────────────────────
-@borrow_bp.route('/return/<isbn>', methods=['POST'])
+@borrow_bp.route('/return/<isbn>/<bookno>', methods=['POST'])
 @token_required
-def return_book(isbn):
+def return_book(isbn, bookno):
     user_id = request.current_user.get('user_id')
     if not user_id:
         return jsonify({'error': 'Only users can return books'}), 403
 
     db  = get_db()
     cur = dc(db)
-    cur.execute('SELECT * FROM book WHERE ISBN = %s', (isbn,))
+    cur.execute('SELECT * FROM book WHERE ISBN = %s AND bookno = %s', (isbn, bookno))
     book = cur.fetchone()
 
     if not book:
@@ -87,8 +85,8 @@ def return_book(isbn):
 
     try:
         cur.execute(
-            'UPDATE book SET user_id=NULL, date_taken=NULL, return_date=NULL, fine=%s WHERE ISBN=%s',
-            (fine, isbn)
+            'UPDATE book SET user_id=NULL, date_taken=NULL, return_date=NULL, fine=%s WHERE ISBN=%s AND bookno=%s',
+            (fine, isbn, bookno)
         )
         db.commit()
     except Exception as e:
@@ -122,12 +120,9 @@ def my_books():
     books = cur.fetchall()
     cur.close()
 
+    from .books import _serialize
     # Compute live tiered fine for each book
     for b in books:
         b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
-        # Ensure datetime fields are serialisable
-        for field in ('date_taken', 'return_date'):
-            if isinstance(b.get(field), datetime.datetime):
-                b[field] = b[field].isoformat()
 
-    return jsonify(books), 200
+    return jsonify(_serialize(books)), 200

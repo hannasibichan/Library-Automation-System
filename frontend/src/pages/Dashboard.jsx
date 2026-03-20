@@ -42,9 +42,9 @@ function StatCard({ icon, value, label, colorClass, trend }) {
 
 function Dashboard() {
     const toast = useToast();
-    const userStr = localStorage.getItem("user");
+    const userStr = sessionStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : {};
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     const [stats, setStats] = useState(null);
     const [myBooks, setMyBooks] = useState([]);

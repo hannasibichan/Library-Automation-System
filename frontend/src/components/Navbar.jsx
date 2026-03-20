@@ -5,9 +5,9 @@ import "../styles/Navbar.css";
 function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
-    const userStr = localStorage.getItem("user");
+    const userStr = sessionStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : null;
-    const userRole = (user?.role || "").toLowerCase();
+    const userRole = (user?.role || "").toLowerCase().trim();
     const isLib = userRole === "librarian";
     const isUser = userRole === "student" || userRole === "faculty";
     const [open, setOpen] = useState(false);
@@ -23,8 +23,8 @@ function Navbar() {
     useEffect(() => setOpen(false), [location]);
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
         navigate(isLib ? "/librarian/login" : "/login");
     };
 

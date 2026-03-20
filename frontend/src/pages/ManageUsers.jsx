@@ -8,7 +8,7 @@ const API = "http://localhost:5000/api";
 
 function ManageUsers() {
     const toast = useToast();
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");

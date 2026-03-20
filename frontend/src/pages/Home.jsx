@@ -31,6 +31,10 @@ const FEATURES = [
 
 function Home() {
     const [visible, setVisible] = React.useState(false);
+    const userStr = sessionStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : null;
+    const isLib = user?.role === "librarian";
+
     React.useEffect(() => {
         const t = setTimeout(() => setVisible(true), 100);
         return () => clearTimeout(t);
@@ -63,18 +67,32 @@ function Home() {
                         library platform — built for students, faculty, and librarians.
                     </p>
                     <div className="hero-actions">
-                        <Link to="/register" className="btn btn-violet btn-lg" id="hero-register-btn">
-                            Get Started Free →
-                        </Link>
-                        <Link to="/login" className="btn btn-outline btn-lg" id="hero-login-btn">
-                            Sign In
-                        </Link>
+                        {user ? (
+                            <Link 
+                                to={isLib ? "/librarian/dashboard" : "/dashboard"} 
+                                className="btn btn-violet btn-lg" 
+                                id="hero-dashboard-btn"
+                            >
+                                Enter Dashboard →
+                            </Link>
+                        ) : (
+                            <>
+                                <Link to="/register" className="btn btn-violet btn-lg" id="hero-register-btn">
+                                    Get Started Free →
+                                </Link>
+                                <Link to="/login" className="btn btn-outline btn-lg" id="hero-login-btn">
+                                    Sign In
+                                </Link>
+                            </>
+                        )}
                     </div>
-                    <div className="hero-extra">
-                        <Link to="/librarian/login" className="librarian-link">
-                            🔐 Librarian Portal →
-                        </Link>
-                    </div>
+                    {!user && (
+                        <div className="hero-extra">
+                            <Link to="/librarian/login" className="librarian-link">
+                                🔐 Librarian Portal →
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </section>
 

@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS librarian (
 
 -- Book table
 CREATE TABLE IF NOT EXISTS book (
-    ISBN VARCHAR(20) PRIMARY KEY,
-    bookno VARCHAR(50) UNIQUE NOT NULL,
+    ISBN VARCHAR(20) NOT NULL,
+    bookno VARCHAR(50) NOT NULL,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(150) NOT NULL,
     publisher VARCHAR(150),
@@ -38,12 +38,12 @@ CREATE TABLE IF NOT EXISTS book (
     return_date DATETIME DEFAULT NULL,
     fine DECIMAL(10,2) DEFAULT 0.00,
     cover_image MEDIUMTEXT DEFAULT NULL,
+    PRIMARY KEY (ISBN, bookno),
     FOREIGN KEY (lib_id) REFERENCES librarian(lib_id) ON DELETE SET NULL,
     FOREIGN KEY (user_id) REFERENCES user(user_id) ON DELETE SET NULL
 );
 
--- Migration: add cover_image column to existing book table (safe to run multiple times)
-ALTER TABLE book ADD COLUMN IF NOT EXISTS cover_image MEDIUMTEXT DEFAULT NULL;
+
 
 -- Book_record table (maintained by librarian)
 CREATE TABLE IF NOT EXISTS book_record (

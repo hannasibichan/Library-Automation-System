@@ -8,7 +8,7 @@ const API = "http://localhost:5000/api";
 
 function ManageRecords() {
     const toast = useToast();
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
     const [records, setRecords] = useState([]);

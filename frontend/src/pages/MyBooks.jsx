@@ -11,7 +11,7 @@ const fmtDate = (dt) =>
 
 function MyBooks() {
     const toast = useToast();
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [returnConfirm, setReturnConfirm] = useState(null);
@@ -29,10 +29,10 @@ function MyBooks() {
 
     const handleReturn = async () => {
         if (!returnConfirm) return;
-        const { ISBN, title } = returnConfirm;
+        const { ISBN, bookno, title } = returnConfirm;
         setReturnConfirm(null);
         try {
-            const res  = await fetch(`${API}/return/${ISBN}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+            const res  = await fetch(`${API}/return/${ISBN}/${bookno}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
             if (!res.ok) { toast(data.error || "Failed to return", "error"); return; }
             const msg = data.fine > 0

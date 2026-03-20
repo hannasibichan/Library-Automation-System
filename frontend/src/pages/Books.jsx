@@ -25,9 +25,10 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                     <div>
                         <div className="book-detail-title">{book.title}</div>
                         <div className="book-detail-author">by {book.author}</div>
-                        <span className={`chip ${book.user_id ? "borrowed" : "available"}`}>
-                            <span className={`avail-dot ${book.user_id ? "borrowed" : "available"}`}></span>
-                            {book.user_id ? "Borrowed" : "Available"}
+                        <span className={`chip ${book.status}`}>
+                            <span className={`avail-dot ${book.status}`}></span>
+                            {book.status === 'requested' ? "Requested" : 
+                             book.status === 'borrowed' ? "Borrowed" : "Available"}
                         </span>
                     </div>
                 </div>
@@ -50,13 +51,12 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
 
                 {/* ── Availability row ── */}
                 <div className="book-detail-row">
-                    <span className="book-detail-key">Availability</span>
-                    <span className={`book-detail-val ${book.user_id ? "borrowed-text" : "available-text"}`}>
+                    <span className={`book-detail-val ${book.status}-text`}>
                         {isMyBook
                             ? (book.status === 'requested' ? "✅ Requested by you" : "✅ Borrowed by you")
-                            : book.user_id
-                                ? "🔒 Currently unavailable"
-                                : "✅ Available to borrow"}
+                            : book.status === 'requested' ? "🔒 Reserved (Pending Pickup)"
+                            : book.user_id ? "🔒 Currently unavailable"
+                            : "✅ Available to borrow"}
                     </span>
                 </div>
 

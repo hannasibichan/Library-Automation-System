@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toast";
 import "../styles/AddLibrarian.css";
 
@@ -7,6 +7,7 @@ const API = "http://localhost:5000/api";
 
 function AddLibrarian() {
     const toast = useToast();
+    const navigate = useNavigate();
     const token = sessionStorage.getItem("token");
 
     const [form, setForm] = useState({ name: "", email: "", mobileno: "", password: "", confirm: "" });
@@ -30,6 +31,9 @@ function AddLibrarian() {
             if (!res.ok) { toast(data.error || "Failed to add librarian", "error"); return; }
             toast(`Librarian "${form.name}" added successfully! 🎉`, "success");
             setForm({ name: "", email: "", mobileno: "", password: "", confirm: "" });
+            setTimeout(() => {
+                navigate("/librarian/dashboard");
+            }, 1500);
         } catch {
             toast("Cannot reach server. Is the backend running?", "error");
         } finally {

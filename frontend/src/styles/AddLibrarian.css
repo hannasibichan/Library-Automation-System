@@ -9,10 +9,29 @@
     border-radius: var(--radius-xl); padding: 2.5rem;
     box-shadow: var(--shadow-lg);
     animation: enter 0.4s var(--ease) both;
+    position: relative;
 }
 .add-lib-header { margin-bottom: 1.75rem; text-align: center; }
-.back-btn { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--ink-4); font-size: 0.84rem; font-weight: 500; text-decoration: none; transition: color 0.15s; margin-bottom: 1.15rem; }
-.back-btn:hover { color: var(--ink); }
+.back-btn { 
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    display: inline-flex; 
+    align-items: center; 
+    gap: 0.3rem; 
+    color: var(--ink-4); 
+    font-size: 0.82rem; 
+    font-weight: 600; 
+    text-decoration: none; 
+    transition: all 0.2s; 
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+}
+.back-btn:hover { 
+    color: var(--brand); 
+    background: var(--brand-light); 
+    transform: translateX(-3px);
+}
 .add-lib-badge { display: inline-block; background: var(--brand-light); border: 1px solid #DDD6FE; color: var(--brand); border-radius: 999px; padding: 0.32rem 0.95rem; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.85rem; }
 .add-lib-header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.55rem; font-weight: 700; color: var(--ink); margin-bottom: 0.35rem; }
 .add-lib-header p { color: var(--ink-4); font-size: 0.88rem; }

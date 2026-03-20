@@ -314,10 +314,10 @@ function ManageBooks() {
                                             {b.lib_id ?? "—"}
                                         </td>
                                         <td className="book-status-cell">
-                                            <span className={`chip ${b.user_id ? "borrowed" : "available"}`}>
-                                                {b.user_id
-                                                    ? `Borrowed${b.borrowed_by ? ` by ${b.borrowed_by}` : ` (UID:${b.user_id})`}`
-                                                    : "Available"}
+                                            <span className={`chip ${b.status}`}>
+                                                {b.status === 'requested' ? "Requested" : 
+                                                 b.status === 'borrowed' ? `Borrowed${b.borrowed_by ? ` by ${b.borrowed_by}` : ` (UID:${b.user_id})`}` : 
+                                                 "Available"}
                                             </span>
                                         </td>
                                         <td className="datetime-cell">{fmtDate(b.date_taken)}</td>
@@ -486,7 +486,7 @@ function ManageBooks() {
                                     ["Author",       detailBook.author],
                                     ["Publisher",    detailBook.publisher || "—"],
                                     ["Librarian ID", detailBook.lib_id ?? "—"],
-                                    ["Status",       detailBook.user_id ? "Borrowed" : "Available"],
+                                    ["Status",       detailBook.status === 'requested' ? "Requested" : detailBook.user_id ? "Borrowed" : "Available"],
                                     ["Borrower",     detailBook.borrowed_by || (detailBook.user_id ? `UID: ${detailBook.user_id}` : "—")],
                                     ["User ID",      detailBook.user_id ?? "—"],
                                     ["Date Taken",   fmtDateTime(detailBook.date_taken)],

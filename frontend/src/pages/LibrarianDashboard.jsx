@@ -148,8 +148,9 @@ function LibrarianDashboard() {
                                     <span className="recent-book-title">{b.title}</span>
                                     <span className="recent-book-meta">by {b.author}{b.publisher ? ` · ${b.publisher}` : ""}</span>
                                 </div>
-                                <span className={`chip ${b.user_id ? "borrowed" : "available"}`} style={{ flexShrink: 0 }}>
-                                    {b.user_id ? "Borrowed" : "Available"}
+                                <span className={`chip ${b.status}`} style={{ flexShrink: 0 }}>
+                                    {b.status === 'requested' ? "Requested" : 
+                                     b.status === 'borrowed' ? "Borrowed" : "Available"}
                                 </span>
                             </div>
                         ))}

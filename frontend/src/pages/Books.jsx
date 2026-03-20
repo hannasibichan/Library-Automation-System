@@ -215,7 +215,7 @@ function Books() {
                                                 {isBorrowed ? "Borrowed" : "Available"}
                                             </span>
                                         </div>
-                                        <div style={{ color: "rgba(200,190,255,0.45)", fontSize: "0.72rem" }}>
+                                        <div style={{ color: "var(--ink-4)", fontSize: "0.78rem", fontWeight: 600 }}>
                                             ISBN: {book.ISBN} | No: {book.bookno}
                                         </div>
                                         <div className="book-card-actions" onClick={e => e.stopPropagation()}>

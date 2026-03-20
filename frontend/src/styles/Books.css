@@ -1,6 +1,6 @@
 /* Books v5 */
 .pagination { display: flex; align-items: center; justify-content: center; gap: 0.85rem; margin-top: 1.75rem; padding-top: 1.35rem; border-top: 1px solid var(--border); }
-.page-info { color: var(--ink-4); font-size: 0.86rem; font-weight: 500; }
+.page-info { color: var(--ink-3); font-size: 0.86rem; font-weight: 600; }
 .book-detail-modal { max-width: 520px; }
 .book-detail-header { display: flex; align-items: flex-start; gap: 1.1rem; margin-bottom: 1.2rem; }
 .book-cover-placeholder { width: 68px; min-height: 90px; border-radius: var(--radius-md); background: var(--brand-light); border: 1px solid #DDD6FE; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex-shrink: 0; }

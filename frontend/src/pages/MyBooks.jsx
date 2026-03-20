@@ -178,9 +178,9 @@ function MyBooks() {
                             <h2>📤 Return Book?</h2>
                             <button className="modal-close" onClick={() => setReturnConfirm(null)}>✕</button>
                         </div>
-                        <p style={{ color: "rgba(200,190,255,0.75)", lineHeight: 1.6, marginBottom: "0.5rem" }}>
+                        <p style={{ color: "var(--ink-2)", lineHeight: 1.6, marginBottom: "0.5rem" }}>
                             You are about to return{" "}
-                            <strong style={{ color: "#e2e0ff" }}>"{returnConfirm.title}"</strong>.
+                            <strong style={{ color: "var(--brand-dark)" }}>"{returnConfirm.title}"</strong>.
                             Once returned, another user may borrow it.
                         </p>
                         {returnConfirm.current_fine > 0 && (

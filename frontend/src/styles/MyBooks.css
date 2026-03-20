@@ -99,9 +99,9 @@
 }
 .mybook-isbn {
     font-family: 'Courier New', monospace;
-    font-size: 0.72rem;
-    color: var(--ink-4);
-    opacity: 0.7;
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    font-weight: 600;
 }
 
 /* ── Borrow details grid (maps to "Borrowing Details" form section) ─────────── */

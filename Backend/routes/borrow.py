@@ -43,8 +43,8 @@ def borrow_book(isbn):
 
     try:
         cur.execute(
-            'UPDATE book SET user_id=%s, date_taken=%s, return_date=%s, fine=0.00 WHERE bookno=%s',
-            (user_id, now, return_date, book['bookno'])
+            'UPDATE book SET user_id=%s, date_taken=%s, return_date=%s, fine=0.00 WHERE ISBN=%s AND bookno=%s',
+            (user_id, now, return_date, isbn, book['bookno'])
         )
         db.commit()
     except Exception as e:

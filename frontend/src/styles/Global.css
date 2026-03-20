@@ -154,30 +154,32 @@ body {
 .form-group input,
 .form-group select,
 .form-group textarea {
-    background: var(--bg-alt);
+    background: #FFFFFF;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
-    font-size: 0.92rem;
+    padding: 0.85rem 1.15rem;
+    font-size: 0.95rem;
     font-family: 'DM Sans', sans-serif;
     color: var(--ink);
     outline: none;
-    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+    transition: all 0.2s var(--ease);
+    box-shadow: var(--shadow-xs);
 }
 
-.form-group input::placeholder { color: var(--ink-4); }
+.form-group input::placeholder { color: var(--ink-4); opacity: 0.6; }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     border-color: var(--brand);
-    background: var(--bg-card);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1), var(--shadow-sm);
+    transform: translateY(-1px);
 }
 
-.form-group input.is-invalid { border-color: var(--coral); }
+.form-group input.is-invalid { border-color: var(--coral); background: var(--coral-light); }
 .form-group select option { background: #fff; color: var(--ink); }
-.field-hint { font-size: 0.76rem; color: var(--coral); }
+.field-hint { font-size: 0.76rem; color: var(--coral); margin-top: 0.2rem; }
 
 /* ── Primary Button ──────────────────────────────────── */
 .btn-primary {
@@ -498,41 +500,57 @@ body {
 /* ── Modal ──────────────────────────────────────────────── */
 .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(26, 26, 46, 0.35);
+    backdrop-filter: blur(8px);
+    background: rgba(26, 26, 46, 0.45);
     display: flex; align-items: center; justify-content: center;
     z-index: 3000; padding: 1rem;
-    animation: fadeIn 0.15s ease;
+    animation: fadeIn 0.25s ease;
 }
 
 .modal {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-    padding: 2.25rem;
-    width: 100%; max-width: 520px;
-    box-shadow: var(--shadow-xl);
-    animation: enter 0.25s var(--spring) both;
-    max-height: 90vh;
+    background: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-2xl);
+    padding: 2.75rem;
+    width: 100%; max-width: 540px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 20px 50px -1px rgba(0, 0, 0, 0.15);
+    animation: enter 0.35s var(--spring) both;
+    max-height: 92vh;
     overflow-y: auto;
+    position: relative;
+    border: 1px solid var(--border);
 }
 
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.modal-header { 
+    display: flex; align-items: flex-start; justify-content: space-between; 
+    margin-bottom: 2rem; 
+}
 
-.modal h2 {
+.modal-header h2 {
     font-family: 'Space Grotesk', sans-serif;
-    color: var(--ink); font-size: 1.2rem; font-weight: 700;
+    color: var(--ink); font-size: 1.5rem; font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
 .modal-close {
-    width: 32px; height: 32px; border-radius: 50%;
+    width: 36px; height: 36px; border-radius: 10px;
     background: var(--bg-alt); border: 1px solid var(--border);
     color: var(--ink-4); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.95rem; transition: all 0.15s;
+    font-size: 1rem; transition: all 0.2s var(--ease);
 }
 
-.modal-close:hover { background: var(--coral-light); color: var(--coral); border-color: #FECDD3; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.5rem; }
+.modal-close:hover { 
+    background: var(--coral-light); color: var(--coral); border-color: #FECDD3; 
+    transform: rotate(90deg);
+}
+
+.modal-actions { 
+    display: flex; justify-content: flex-end; gap: 0.85rem; 
+    margin-top: 2rem; 
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--bg-alt);
+}
 
 /* ── Quick Actions ──────────────────────────────────────── */
 .quick-actions {

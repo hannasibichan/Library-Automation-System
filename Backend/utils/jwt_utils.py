@@ -48,3 +48,17 @@ def librarian_required(f):
             return jsonify({'error': 'Invalid token'}), 401
         return f(*args, **kwargs)
     return decorated
+def main_librarian_required(f):
+    """Protect routes: requires the main admin librarian (lib_id = 1)."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization', '').replace('Bearer ', '')
+        if not token: return jsonify({'error': 'Token missing'}), 401
+        try:
+            data = jwt.decode(token, current_app.config['JWT_SECRET'], algorithms=['HS256'])
+            if data.get('role') != 'librarian' or data.get('lib_id') != 1:
+                return jsonify({'error': 'Super Admin access required'}), 403
+            request.current_user = data
+        except: return jsonify({'error': 'Invalid or expired token'}), 401
+        return f(*args, **kwargs)
+    return decorated

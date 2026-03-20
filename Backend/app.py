@@ -46,6 +46,15 @@ def create_app():
         def scheduled_reservation_job():
             check_expired_reservations(app)
 
+        # 3. Schedule the fine sync task to run every 5 minutes
+        from utils.fine_utils import update_db_fines
+        @scheduler.task('interval', id='sync_fines_job', minutes=5)
+        def scheduled_fine_sync():
+            update_db_fines(app)
+
+        # Sync once at startup
+        update_db_fines(app)
+
     # Global CORS policy for dev - Ensuring headers are always present
     CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]}}, supports_credentials=True)
 
@@ -68,12 +77,14 @@ def create_app():
     from routes.borrow  import borrow_bp
     from routes.records import records_bp
     from routes.users   import users_bp
+    from routes.librarians import librarians_bp
 
     app.register_blueprint(auth_bp,    url_prefix='/api/auth')
     app.register_blueprint(books_bp,   url_prefix='/api/books')
     app.register_blueprint(borrow_bp,  url_prefix='/api')
     app.register_blueprint(records_bp, url_prefix='/api/records')
     app.register_blueprint(users_bp,   url_prefix='/api/users')
+    app.register_blueprint(librarians_bp, url_prefix='/api/librarians')
 
     # Debug route to manually trigger notifications
     from flask import jsonify
@@ -81,6 +92,12 @@ def create_app():
     def manual_notification_trigger():
         send_due_date_reminders(app, mail)
         return jsonify({'message': 'Manual notification scan triggered.'}), 200
+
+    @app.route('/api/debug/sync-fines', methods=['POST'])
+    def manual_fine_sync():
+        from utils.fine_utils import update_db_fines
+        update_db_fines(app)
+        return jsonify({'message': 'Database fines synchronized successfully.'}), 200
 
     return app
 

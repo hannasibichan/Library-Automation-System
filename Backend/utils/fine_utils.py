@@ -39,3 +39,24 @@ def calculate_gradual_fine(return_date):
     total_fine = 100.00 + (5.00 * days_overdue)
             
     return round(total_fine, 2)
+    
+def update_db_fines(app):
+    from utils.db import get_db
+    with app.app_context():
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        try:
+            cur.execute("SELECT ISBN, bookno, return_date FROM book WHERE status = 'borrowed'")
+            books = cur.fetchall()
+            for b in books:
+                fine = calculate_gradual_fine(b['return_date'])
+                cur.execute(
+                    "UPDATE book SET fine = %s WHERE ISBN = %s AND bookno = %s",
+                    (fine, b['ISBN'], b['bookno'])
+                )
+            db.commit()
+            print(f"💰 Database Fines Synced: Updated {len(books)} books.")
+        except Exception as e:
+            print(f"❌ Error syncing fines: {e}")
+        finally:
+            cur.close()

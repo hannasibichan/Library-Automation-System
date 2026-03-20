@@ -9,7 +9,22 @@
     transition: background 0.15s, border-color 0.15s;
 }
 .recent-book-item:hover { background: var(--brand-light); border-color: #DDD6FE; }
-.recent-book-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+.recent-book-cover-mini {
+    width: 44px; height: 62px;
+    border-radius: 6px; overflow: hidden;
+    flex-shrink: 0; background: var(--bg-alt);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+}
+.recent-book-cover-mini img { width: 100%; height: 100%; object-fit: cover; }
+.recent-book-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--brand-light); color: var(--brand);
+    font-weight: 700; font-size: 1.15rem;
+}
+
 .recent-book-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
-.recent-book-title { font-weight: 600; color: var(--ink); font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.recent-book-meta { font-size: 0.76rem; color: var(--ink-4); }
+.recent-book-title { font-weight: 600; color: var(--ink); font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-book-meta { font-size: 0.78rem; color: var(--ink-4); }

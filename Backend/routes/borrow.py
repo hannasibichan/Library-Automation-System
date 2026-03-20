@@ -186,12 +186,12 @@ def return_book(isbn, bookno):
 def list_borrowed():
     db  = get_db()
     cur = dc(db)
-    # Join with users to see borrower details
+    # Join with users to see borrower details (LEFT JOIN to catch invalid/missing user records)
     cur.execute("""
         SELECT b.ISBN, b.bookno, b.title, b.author, b.user_id, b.date_taken, b.return_date, b.fine,
-               u.name AS user_name, u.email AS user_email
+               COALESCE(u.name, 'Unknown User') AS user_name, COALESCE(u.email, '—') AS user_email
         FROM book b
-        JOIN user u ON b.user_id = u.user_id
+        LEFT JOIN user u ON b.user_id = u.user_id
         WHERE b.status = 'borrowed'
         ORDER BY b.return_date ASC
     """)
@@ -199,7 +199,11 @@ def list_borrowed():
     cur.close()
     
     from .books import _serialize
-    return jsonify(_serialize(borrowed)), 200
+    serialized = _serialize(borrowed)
+    for item in serialized:
+        item['current_fine'] = calculate_gradual_fine(item.get('return_date'))
+        
+    return jsonify(serialized), 200
 
 
 # ─── My books (Including Requests) ────────────────────────────────────────────

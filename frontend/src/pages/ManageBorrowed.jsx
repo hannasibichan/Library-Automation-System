@@ -117,8 +117,8 @@ function ManageBorrowed() {
                                             </span>
                                         </td>
                                         <td>
-                                            {item.fine > 0 ? (
-                                                <span className="chip danger">₹{Number(item.fine).toFixed(2)}</span>
+                                            {(item.current_fine || item.fine) > 0 ? (
+                                                <span className="chip danger">₹{Number(item.current_fine || item.fine).toFixed(2)}</span>
                                             ) : "₹0.00"}
                                         </td>
                                         <td style={{ textAlign: "right" }}>

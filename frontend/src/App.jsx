@@ -15,6 +15,7 @@ import ManageRecords from "./pages/ManageRecords";
 import ManageUsers from "./pages/ManageUsers";
 import ManageRequests from "./pages/ManageRequests";
 import ManageBorrowed from "./pages/ManageBorrowed";
+import ManageLibrarians from "./pages/ManageLibrarians";
 import Profile from "./pages/Profile";
 import AddLibrarian from "./pages/AddLibrarian";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -78,6 +79,9 @@ function App() {
                     } />
                     <Route path="/librarian/borrowed" element={
                         <ProtectedRoute role="librarian"><ManageBorrowed /></ProtectedRoute>
+                    } />
+                    <Route path="/librarian/manage-admins" element={
+                        <ProtectedRoute role="librarian"><ManageLibrarians /></ProtectedRoute>
                     } />
                     <Route path="/librarian/add-librarian" element={
                         <ProtectedRoute role="librarian"><AddLibrarian /></ProtectedRoute>

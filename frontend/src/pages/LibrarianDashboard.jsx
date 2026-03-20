@@ -71,6 +71,24 @@ function LibrarianDashboard() {
                     <div className="welcome-meta">
                         <span className="role-badge">🏛️ Librarian</span>
                         <span style={{ color: "rgba(200,190,255,0.5)", fontSize: "0.8rem" }}>{user.email}</span>
+                        <button 
+                            className="btn btn-outline btn-sm" 
+                            style={{ marginLeft: "auto" }}
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch(`${API}/debug/sync-fines`, { 
+                                        method: "POST",
+                                        headers: { Authorization: `Bearer ${token}` }
+                                    });
+                                    if (res.ok) {
+                                        toast("Fines synchronized with database!", "success");
+                                        fetchData();
+                                    }
+                                } catch (e) { toast("Sync failed", "error"); }
+                            }}
+                        >
+                            🔄 Sync Fines
+                        </button>
                     </div>
                 </div>
 
@@ -79,6 +97,7 @@ function LibrarianDashboard() {
                         <StatCard icon="📚" value={total} label="Total Books" colorClass="violet" />
                         <StatCard icon="✅" value={available} label="Available" colorClass="green" />
                         <StatCard icon="🔖" value={borrowed} label="Borrowed" colorClass="amber" />
+                        <StatCard icon="💰" value={stats?.total_fines ?? 0} label="Total Fines" colorClass="red" />
                         <StatCard icon="👥" value={stats?.total_users ?? 0} label="Users" colorClass="blue" />
                     </div>
                 )}
@@ -143,7 +162,13 @@ function LibrarianDashboard() {
                     <div className="recent-books-list">
                         {recentBooks.map(b => (
                             <div className="recent-book-item" key={b.ISBN}>
-                                <span className="recent-book-icon">📚</span>
+                                <div className="recent-book-cover-mini">
+                                    {b.cover_image ? (
+                                        <img src={b.cover_image} alt={b.title} />
+                                    ) : (
+                                        <div className="recent-book-placeholder">{b.title[0]}</div>
+                                    )}
+                                </div>
                                 <div className="recent-book-info">
                                     <span className="recent-book-title">{b.title}</span>
                                     <span className="recent-book-meta">by {b.author}{b.publisher ? ` · ${b.publisher}` : ""}</span>

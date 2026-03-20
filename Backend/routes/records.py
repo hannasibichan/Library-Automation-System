@@ -123,9 +123,19 @@ def get_stats():
 
     cur.execute('SELECT COUNT(*) AS available FROM book WHERE user_id IS NULL')
     available = cur.fetchone()['available']
+
+    # Calculate total live fines across all borrowed books
+    from utils.fine_utils import calculate_gradual_fine
+    cur.execute('SELECT return_date FROM book WHERE status = "borrowed"')
+    borrowed_dates = cur.fetchall()
+    total_fines = sum(calculate_gradual_fine(b['return_date']) for b in borrowed_dates)
+    
     cur.close()
 
     return jsonify({
-        'total_books': total_books, 'borrowed': borrowed,
-        'available': available, 'total_users': total_users
+        'total_books': total_books,
+        'borrowed': borrowed,
+        'available': available,
+        'total_users': total_users,
+        'total_fines': total_fines
     }), 200

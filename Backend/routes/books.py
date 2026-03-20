@@ -141,13 +141,16 @@ def add_book():
     if not all([isbn, bookno, title, author]):
         return jsonify({'error': 'ISBN, bookno, title, and author are required'}), 400
 
+    # Determine status based on user_id
+    status = 'borrowed' if user_id else 'available'
+
     db  = get_db()
     cur = dc(db)
     try:
         cur.execute(
-            'INSERT INTO book (ISBN, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image) '
-            'VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
-            (isbn, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, image_filename)
+            'INSERT INTO book (ISBN, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image, status) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (isbn, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, image_filename, status)
         )
         cur.execute(
             'UPDATE book_record SET total_books_available = total_books_available + 1, '
@@ -157,7 +160,10 @@ def add_book():
         db.commit()
     except Exception as e:
         db.rollback()
-        if 'Duplicate entry' in str(e) or '1062' in str(e):
+        err_str = str(e).lower()
+        if 'foreign key constraint fails' in err_str and 'user_id' in err_str:
+            return jsonify({'error': 'Invalid User ID. This user does not exist.'}), 400
+        if 'duplicate entry' in err_str or '1062' in err_str:
             return jsonify({'error': 'Book No. already exists. Each copy must have a unique book number.'}), 409
         return jsonify({'error': str(e)}), 500
     finally:
@@ -192,15 +198,18 @@ def update_book(isbn, bookno):
         else:
             image_filename = cover_image # Keep existing filename
 
+    # Determine status based on user_id
+    status = 'borrowed' if user_id else 'available'
+
     db  = get_db()
     cur = dc(db)
     try:
         cur.execute(
             'UPDATE book SET title=%s, author=%s, publisher=%s, ISBN=%s, bookno=%s, lib_id=%s, '
-            'user_id=%s, date_taken=%s, return_date=%s, fine=%s, cover_image=%s '
+            'user_id=%s, date_taken=%s, return_date=%s, fine=%s, cover_image=%s, status=%s '
             'WHERE ISBN=%s AND bookno=%s',
             (title, author, publisher, data.get('ISBN', '').strip(), data.get('bookno', '').strip(), lib_id,
-              user_id, date_taken, return_date, fine, image_filename, isbn, bookno)
+              user_id, date_taken, return_date, fine, image_filename, status, isbn, bookno)
         )
         cur.execute(
             'UPDATE book_record SET update_record = %s WHERE lib_id = %s ORDER BY book_record_id DESC LIMIT 1',
@@ -209,6 +218,11 @@ def update_book(isbn, bookno):
         db.commit()
     except Exception as e:
         db.rollback()
+        err_str = str(e).lower()
+        if 'foreign key constraint fails' in err_str and 'user_id' in err_str:
+            return jsonify({'error': 'Invalid User ID. This user does not exist.'}), 400
+        if 'duplicate entry' in err_str or '1062' in err_str:
+            return jsonify({'error': 'A book with this ISBN and Book No. already exists.'}), 409
         return jsonify({'error': str(e)}), 500
     finally:
         cur.close()

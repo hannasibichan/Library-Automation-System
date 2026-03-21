@@ -1,6 +1,6 @@
-# Contributing to Bibliotheca
+# Contributing to SmartStack
 
-First off, thank you for considering contributing to Bibliotheca! It's people like you that make the project great.
+First off, thank you for considering contributing to SmartStack! It's people like you that make the project great.
 
 ## How Can I Contribute?
 

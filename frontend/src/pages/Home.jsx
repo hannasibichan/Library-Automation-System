@@ -56,7 +56,7 @@ function Home() {
                 <div className="hero-content">
                     <div className="hero-badge">
                         <span className="hero-badge-dot"></span>
-                        📖 Bibliotheca — Smart Library System
+                        📖 SmartStack — Smart Library System
                     </div>
                     <h1 className="hero-title">
                         The <span className="hero-gradient">Smartest Way</span><br />
@@ -139,7 +139,7 @@ function Home() {
             </section>
 
             <footer className="home-footer">
-                <p>© 2025 <strong style={{ color: "#6366f1" }}>Bibliotheca</strong> — Built with Flask, MySQL &amp; React</p>
+                <p>© 2025 <strong style={{ color: "#6366f1" }}>SmartStack</strong> — Built with Flask, MySQL &amp; React</p>
             </footer>
         </div>
     );

@@ -82,8 +82,9 @@ function MyBooks() {
                 ) : (
                     <div className="mybooks-list">
                         {books.map(book => {
-                            const isOverdue = book.return_date && new Date(book.return_date) < new Date();
-                            const activeFine = book.current_fine > 0 ? book.current_fine : book.fine;
+                            const returnDate = new Date(book.return_date);
+                            const isOverdue = book.return_date && new Date(returnDate.setHours(23, 59, 59, 999)) < new Date();
+                            const activeFine = book.current_fine; // Prioritize calculated fine
                             return (
                                 <div
                                     className={`mybook-card ${isOverdue ? "overdue-card" : ""}`}

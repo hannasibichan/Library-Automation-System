@@ -15,55 +15,86 @@
     transition: box-shadow 0.25s;
 }
 
-.navbar.scrolled { box-shadow: var(--shadow-sm); }
+.navbar.scrolled {
+    box-shadow: var(--shadow-sm);
+}
 
 .navbar-brand {
-    display: flex; align-items: center; gap: 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
     text-decoration: none;
 }
 
-.navbar-logo { font-size: 1.5rem; }
+.navbar-logo {
+    font-size: 1.5rem;
+}
 
 .navbar-title {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.15rem; font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--ink);
     letter-spacing: -0.03em;
 }
 
 .navbar-links {
-    display: flex; list-style: none; gap: 0.15rem;
-    margin: 0; padding: 0;
+    display: flex;
+    list-style: none;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0;
 }
 
 .navbar-links a {
-    display: inline-flex; align-items: center; gap: 0.3rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     color: var(--ink-3);
     text-decoration: none;
     padding: 0.42rem 0.85rem;
     border-radius: var(--radius-sm);
-    font-size: 0.86rem; font-weight: 500;
+    font-size: 0.86rem;
+    font-weight: 500;
     transition: color 0.15s, background 0.15s;
 }
 
-.navbar-links a:hover { color: var(--brand); background: var(--brand-light); }
+.navbar-links a:hover {
+    color: var(--brand);
+    background: var(--brand-light);
+}
 
 .navbar-links a.active {
-    color: var(--brand); background: var(--brand-light);
+    color: var(--brand);
+    background: var(--brand-light);
     font-weight: 600;
 }
 
-.navbar-right { display: flex; align-items: center; gap: 0.65rem; }
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
 
 .navbar-avatar {
-    width: 34px; height: 34px; border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
     background: var(--brand);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 0.78rem; font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
     letter-spacing: 0.04em;
 }
 
-.navbar-username { color: var(--ink); font-size: 0.84rem; font-weight: 600; }
+.navbar-username {
+    color: var(--ink);
+    font-size: 0.84rem;
+    font-weight: 600;
+}
 
 .navbar-logout {
     background: var(--bg-alt);
@@ -71,44 +102,98 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 0.38rem 0.85rem;
-    font-size: 0.82rem; font-weight: 600;
-    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
     transition: all 0.15s;
 }
 
-.navbar-logout:hover { background: var(--coral-light); color: var(--coral); border-color: #FECDD3; }
+.navbar-logout:hover {
+    background: var(--coral-light);
+    color: var(--coral);
+    border-color: #FECDD3;
+}
 
 .navbar-toggle {
     display: none;
-    flex-direction: column; gap: 4px;
+    flex-direction: column;
+    gap: 4px;
     background: var(--bg-alt);
     border: 1px solid var(--border);
-    padding: 7px; border-radius: var(--radius-sm);
-    cursor: pointer; width: 36px; height: 36px;
-    justify-content: center; align-items: center;
+    padding: 7px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+    align-items: center;
 }
 
 .navbar-toggle span {
     display: block; width: 16px; height: 2px;
     background: var(--ink-3); border-radius: 2px;
+    transition: all 0.3s var(--ease);
 }
 
+.navbar-toggle.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.navbar-toggle.open span:nth-child(2) { opacity: 0; }
+.navbar-toggle.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
 @media (max-width: 768px) {
-    .navbar { padding: 0.7rem 1.25rem; }
-    .navbar-toggle { display: flex; }
+    .navbar { 
+        padding: 0.7rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+    }
+    .navbar-toggle { 
+        display: flex; 
+        margin-right: 0;
+        flex-shrink: 0;
+    }
+
+    .navbar-brand {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 0;
+        z-index: 5;
+        white-space: nowrap;
+    }
+    
     .navbar-links {
         display: none;
-        position: absolute;
-        top: 100%; left: 0; right: 0;
+        position: fixed;
+        top: 3.5rem; left: 0; right: 0; bottom: 0;
         flex-direction: column;
         background: var(--bg-card);
-        padding: 0.5rem 1rem 1rem;
-        border-bottom: 1px solid var(--border);
-        box-shadow: var(--shadow-md);
+        padding: 1.5rem 0 3rem;
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        overflow-y: auto;
     }
-    .navbar-links.open { display: flex; }
-    .navbar-right { display: none; }
+
+    .navbar-links.open { display: flex; animation: slideDown 0.3s var(--ease) both; }
+    .navbar-links a { width: 100%; padding: 0.8rem 1.5rem; border-radius: 0; }
+
+    .navbar-right {
+        display: flex; 
+        gap: 0.5rem;
+        margin-left: auto;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .navbar-username { display: none; }
+    .navbar-logout { padding: 0.35rem 0.65rem; font-size: 0.72rem; }
 }
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* -- Notification Badge ------------------------------------------------------ */
 .nav-badge {
     position: absolute;
@@ -133,7 +218,15 @@
 }
 
 @keyframes badge-pulse {
-    0%   { transform: translate(50%, -50%) scale(1); }
-    50%  { transform: translate(50%, -50%) scale(1.18); }
-    100% { transform: translate(50%, -50%) scale(1); }
+    0% {
+        transform: translate(50%, -50%) scale(1);
+    }
+
+    50% {
+        transform: translate(50%, -50%) scale(1.18);
+    }
+
+    100% {
+        transform: translate(50%, -50%) scale(1);
+    }
 }

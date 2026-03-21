@@ -115,7 +115,20 @@
     padding: 0.75rem 0.85rem;
 }
 @media (max-width: 640px) {
-    .borrow-details-grid { grid-template-columns: repeat(2, 1fr); }
+    .borrow-details-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 1.25rem;
+        padding: 0.85rem 1rem;
+        border-radius: var(--radius-md);
+        scrollbar-width: none; /* Hide scrollbar for cleaner look */
+        -ms-overflow-style: none;
+    }
+    .borrow-details-grid::-webkit-scrollbar { display: none; }
+    .borrow-detail-item {
+        flex-shrink: 0;
+        min-width: 110px;
+    }
 }
 
 .borrow-detail-item {

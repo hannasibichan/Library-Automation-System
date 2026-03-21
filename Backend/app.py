@@ -52,6 +52,10 @@ def create_app():
         def scheduled_fine_sync():
             update_db_fines(app)
 
+        # Send reminders once at startup
+        from utils.notifications import send_due_date_reminders
+        send_due_date_reminders(app, mail)
+
         # Sync once at startup
         update_db_fines(app)
 

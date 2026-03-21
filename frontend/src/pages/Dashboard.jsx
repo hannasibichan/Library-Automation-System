@@ -145,7 +145,8 @@ function Dashboard() {
                 ) : (
                     <div className="books-grid">
                         {myBooks.slice(0, 4).map(book => {
-                            const isOverdue = book.return_date && new Date(book.return_date) < new Date();
+                            const returnDate = new Date(book.return_date);
+                            const isOverdue = book.return_date && new Date(returnDate.setHours(23, 59, 59, 999)) < new Date();
                             return (
                                 <Link to="/my-books" className="book-card-mini" key={book.ISBN}>
                                     <div className="bcm-cover">

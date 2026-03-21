@@ -20,23 +20,20 @@ def calculate_gradual_fine(return_date):
             return 0.00
 
     now = datetime.datetime.now()
-    if now <= return_date:
+    today = now.date()
+    # Normalize return_date to just the date for whole-day comparison
+    due_date = return_date.date() if hasattr(return_date, 'date') else return_date
+
+    # If today is same or before return date, no fine
+    if today <= due_date:
         return 0.00
         
-    days_overdue = (now - return_date).days
+    days_overdue = (today - due_date).days
     
-    # If it is same day but later time, (now - return_date).days might be 0.
-    # We should calculate as (seconds // (24*3600)) or just handle 0 accurately.
-    # Typically, part of a day counts as 1 day late.
-    
-    # To be precise on days:
-    if days_overdue <= 0 and now > return_date:
-        days_overdue = 1
-    elif days_overdue <= 0:
-        return 0.00
-
-    # Fixed base fine 100 + 5 per day after return date
-    total_fine = 100.00 + (5.00 * days_overdue)
+    # 1 day late = 100.00
+    # 2 days late = 105.00
+    # Formula: 100 + (days_overdue - 1) * 5
+    total_fine = 100.00 + (5.00 * (days_overdue - 1))
             
     return round(total_fine, 2)
     

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from utils.db import get_db
 from utils.jwt_utils import token_required, librarian_required
+from utils.fine_utils import calculate_gradual_fine
 import datetime
 
 books_bp = Blueprint('books', __name__)
@@ -62,6 +63,12 @@ def _serialize(books_list):
         img = b.get('cover_image')
         if img and not img.startswith('data:image') and not img.startswith('http'):
             b['cover_image'] = f"http://localhost:5000/uploads/{img}"
+        
+        # Add dynamic current_fine calculation
+        if b.get('status') == 'borrowed':
+            b['current_fine'] = calculate_gradual_fine(b.get('return_date'))
+        else:
+            b['current_fine'] = 0.00
             
     return books_list
 
@@ -162,6 +169,15 @@ def add_book():
 
     db  = get_db()
     cur = dc(db)
+    
+    # Check if user has overdue books before allowing addition with user_id
+    if user_id:
+        cur.execute("SELECT return_date FROM book WHERE user_id = %s AND status = 'borrowed'", (user_id,))
+        borrowed = cur.fetchall()
+        for b in borrowed:
+            if b['return_date'] and b['return_date'].date() < now.date():
+                cur.close()
+                return jsonify({'error': 'This user has overdue books. Return them before borrowing more.'}), 403
     try:
         cur.execute(
             'INSERT INTO book (ISBN, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image, status) '
@@ -234,6 +250,15 @@ def update_book(isbn, bookno):
 
     db  = get_db()
     cur = dc(db)
+
+    # Check if user has overdue books before allowing update with user_id
+    if user_id:
+        cur.execute("SELECT return_date FROM book WHERE user_id = %s AND status = 'borrowed' AND (ISBN != %s OR bookno != %s)", (user_id, isbn, bookno))
+        borrowed = cur.fetchall()
+        for b in borrowed:
+            if b['return_date'] and b['return_date'].date() < now.date():
+                cur.close()
+                return jsonify({'error': 'This user has overdue books and must return them first.'}), 403
     try:
         cur.execute(
             'UPDATE book SET title=%s, author=%s, publisher=%s, ISBN=%s, bookno=%s, lib_id=%s, '

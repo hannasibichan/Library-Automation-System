@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [1.1.0] - 2025-03-11
 
 ### Added
-- **Bibliotheca Branding:** Complete rename from "Library MS" to "Bibliotheca".
+- **SmartStack Branding:** Complete rename from "Library MS" to "SmartStack".
 - **Librarian Registration:** Existing librarians can now add new librarian accounts via the UI and API.
 - **Glassmorphic UI v3:** Enhanced all pages with a premium dark-themed design.
 - **Animations:** Added page-level entrance animations, staggered card reveals, and glowing hover states.

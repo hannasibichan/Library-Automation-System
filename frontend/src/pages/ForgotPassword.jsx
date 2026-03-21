@@ -45,7 +45,7 @@ function ForgotPassword() {
             <div className="auth-card fade-in-up">
                 <div className="auth-logo">
                     <span className="logo-icon">🔑</span>
-                    <h1>Bibliotheca</h1>
+                    <h1>SmartStack</h1>
                     <p>Reset your password</p>
                 </div>
 

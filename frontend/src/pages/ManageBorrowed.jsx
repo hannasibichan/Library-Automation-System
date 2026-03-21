@@ -111,15 +111,21 @@ function ManageBorrowed() {
                                         </td>
                                         <td>{fmtDate(item.date_taken)}</td>
                                         <td>
-                                            <span style={{ color: new Date(item.return_date) < new Date() ? "#dc2626" : "inherit" }}>
+                                            <span style={{ color: item.return_date && new Date(new Date(item.return_date).setHours(23, 59, 59, 999)) < new Date() ? "#dc2626" : "inherit" }}>
                                                 {fmtDate(item.return_date)}
-                                                {new Date(item.return_date) < new Date() && " ⚠️"}
+                                                {item.return_date && new Date(new Date(item.return_date).setHours(23, 59, 59, 999)) < new Date() && " ⚠️"}
                                             </span>
                                         </td>
                                         <td>
-                                            {(item.current_fine || item.fine) > 0 ? (
-                                                <span className="chip danger">₹{Number(item.current_fine || item.fine).toFixed(2)}</span>
-                                            ) : "₹0.00"}
+                                            {item.current_fine !== undefined ? (
+                                                item.current_fine > 0 ? (
+                                                    <span className="chip danger">₹{Number(item.current_fine).toFixed(2)}</span>
+                                                ) : "₹0.00"
+                                            ) : (
+                                                item.fine > 0 ? (
+                                                    <span className="chip danger">₹{Number(item.fine).toFixed(2)}</span>
+                                                ) : "₹0.00"
+                                            )}
                                         </td>
                                         <td style={{ textAlign: "right" }}>
                                             <button className="btn btn-green btn-sm" onClick={() => handleReturn(item)}>

@@ -1,7 +1,7 @@
 @echo off
 echo.
 echo  #########################################################
-echo  #       BIBLIOTHECA - AUTOMATED PROJECT SETUP         #
+echo  #       SMARTSTACK - AUTOMATED PROJECT SETUP         #
 echo  #########################################################
 echo.
 

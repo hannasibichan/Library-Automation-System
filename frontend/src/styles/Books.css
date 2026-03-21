@@ -44,3 +44,8 @@
 .book-card:hover .book-card-cover-img {
     transform: scale(1.04);
 }
+
+@media (max-width: 640px) {
+    .pagination { flex-direction: column; gap: 0.65rem; }
+    .book-detail-header { flex-direction: column; align-items: center; text-align: center; }
+}

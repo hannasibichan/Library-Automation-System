@@ -45,7 +45,7 @@ function Login() {
             <nav className="auth-navbar">
                 <Link to="/" className="auth-nav-brand">
                     <span className="auth-nav-logo">📖</span>
-                    <span className="auth-nav-title">Bibliotheca</span>
+                    <span className="auth-nav-title">SmartStack</span>
                 </Link>
                 <div className="auth-nav-links">
                     <Link to="/" className="auth-nav-back" id="login-back-home">
@@ -59,6 +59,9 @@ function Login() {
 
             <div className="auth-body">
                 <div className="auth-card clay-card fade-in-up">
+                    <Link to="/" className="auth-card-back" id="login-card-back">
+                        ← Back to Home
+                    </Link>
                     {/* Decorative clay blobs */}
                     <div className="clay-blob clay-blob-1"></div>
                     <div className="clay-blob clay-blob-2"></div>
@@ -66,7 +69,7 @@ function Login() {
                     <div className="auth-logo">
                         <span className="logo-icon">📖</span>
                         <h1>Welcome Back</h1>
-                        <p>Sign in to your Bibliotheca account</p>
+                        <p>Sign in to your SmartStack account</p>
                     </div>
 
                     <form className="auth-form" onSubmit={handleSubmit} id="login-form">

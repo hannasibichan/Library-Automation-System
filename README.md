@@ -1,8 +1,8 @@
-# 📖 Bibliotheca — Smart Library Automation System
+# 📖 SmartStack — Smart Library Automation System
 
-Bibliotheca is a premium, modern library management system designed for students, faculty, and librarians. It features a sleek glassmorphic UI, real-time notifications, and a robust Flask-MySQL backend.
+SmartStack is a premium, modern library management system designed for students, faculty, and librarians. It features a sleek glassmorphic UI, real-time notifications, and a robust Flask-MySQL backend.
 
-![Bibliotheca Hero](https://img.shields.io/badge/UI-Glassmorphism-blueviolet?style=for-the-badge)
+![SmartStack Hero](https://img.shields.io/badge/UI-Glassmorphism-blueviolet?style=for-the-badge)
 ![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20Flask%20%7C%20MySQL-blue?style=for-the-badge)
 
 ## ✨ Features

@@ -43,11 +43,21 @@ def request_book(isbn):
         return jsonify({'error': 'No available copies left for this book.'}), 404
 
     # 3. Check borrow limit (max 5)
-    cur.execute('SELECT COUNT(*) AS cnt FROM book WHERE user_id = %s', (user_id,))
-    count = cur.fetchone()['cnt']
-    if count >= 5:
+    cur.execute('SELECT return_date, status FROM book WHERE user_id = %s', (user_id,))
+    user_books = cur.fetchall()
+    
+    if len(user_books) >= 5:
         cur.close()
         return jsonify({'error': 'Borrow limit reached (max 5 books)'}), 400
+        
+    # 4. Check for overdue books
+    now = datetime.datetime.now()
+    for b in user_books:
+        if b['status'] == 'borrowed' and b['return_date']:
+            # Compare dates (treat whole return day as valid)
+            if b['return_date'].date() < now.date():
+                cur.close()
+                return jsonify({'error': 'ACCESS DENIED: You have overdue books. Please return them and settle your fines before borrowing more.'}), 403
 
     now    = datetime.datetime.now()
     expiry = now + datetime.timedelta(hours=RESERVATION_HOURS)
@@ -89,6 +99,15 @@ def confirm_borrow(isbn, bookno, user_id):
         return jsonify({'error': 'Book not found'}), 404
     if book['status'] != 'requested' or str(book['user_id']) != str(user_id):
         return jsonify({'error': 'No active request found for this user/book'}), 400
+
+    # Check if user has other overdue books
+    now = datetime.datetime.now()
+    cur.execute("SELECT return_date FROM book WHERE user_id = %s AND status = 'borrowed'", (user_id,))
+    borrowed = cur.fetchall()
+    for b in borrowed:
+        if b['return_date'] and b['return_date'].date() < now.date():
+            cur.close()
+            return jsonify({'error': 'This user has overdue books. They must be returned before new books are issued.'}), 403
 
     now         = datetime.datetime.now()
     return_date = now + datetime.timedelta(days=BORROW_DAYS)

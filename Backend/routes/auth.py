@@ -201,13 +201,13 @@ def forgot_password():
     try:
         from app import mail
         msg = Message(
-            subject="🔐 Bibliotheca - Password Reset Code",
+            subject="🔐 SmartStack - Password Reset Code",
             recipients=[email]
         )
         msg.html = f"""
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #6d28d9; margin: 0; font-size: 24px;">📖 Bibliotheca</h1>
+                <h1 style="color: #6d28d9; margin: 0; font-size: 24px;">📖 SmartStack</h1>
                 <p style="color: #64748b; font-size: 14px;">Library Automation System</p>
             </div>
             
@@ -223,7 +223,7 @@ def forgot_password():
             </div>
             
             <div style="margin-top: 20px; text-align: center; color: #94a3b8; font-size: 12px;">
-                &copy; 2024 Bibliotheca Library Management. All rights reserved.
+                &copy; 2024 SmartStack Library Management. All rights reserved.
             </div>
         </div>
         """

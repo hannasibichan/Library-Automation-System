@@ -89,11 +89,6 @@ function Navbar() {
 
     return (
         <nav className={`navbar ${scrolled ? "scrolled" : ""}`}>
-            <Link to={user ? (isLib ? "/librarian/dashboard" : "/dashboard") : "/"} className="navbar-brand">
-                <span className="navbar-logo">📖</span>
-                <span className="navbar-title">Bibliotheca</span>
-            </Link>
-
             <button
                 className={`navbar-toggle ${open ? "open" : ""}`}
                 onClick={() => setOpen(!open)}
@@ -102,6 +97,11 @@ function Navbar() {
             >
                 <span></span><span></span><span></span>
             </button>
+
+            <Link to={user ? (isLib ? "/librarian/dashboard" : "/dashboard") : "/"} className="navbar-brand">
+                <span className="navbar-logo">📖</span>
+                <span className="navbar-title">SmartStack</span>
+            </Link>
 
             <ul className={`navbar-links ${open ? "open" : ""}`}>
                 {user ? (isLib ? libLinks : isUser ? userLinks : guestLinks) : guestLinks}

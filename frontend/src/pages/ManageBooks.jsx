@@ -8,7 +8,7 @@ const API = "http://localhost:5000/api";
 
 const EMPTY = {
     ISBN: "", bookno: "", title: "", author: "", publisher: "",
-    lib_id: "", user_id: "", date_taken: "", return_date: "", fine: "",
+    lib_id: "", user_id: "", date_taken: "", return_date: "", fine: 0,
     cover_image: "", originalBookNo: "", originalISBN: "",
 };
 
@@ -211,20 +211,6 @@ function ManageBooks() {
         } catch { toast("Server error", "error"); }
     };
 
-    const handleReturnBook = async (book) => {
-        if (!window.confirm(`Mark "${book.title}" (No: ${book.bookno}) as returned?`)) return;
-        try {
-            const res = await fetch(`${API}/return/${book.ISBN}/${book.bookno}`, { 
-                method: "POST", 
-                headers: { Authorization: `Bearer ${token}` } 
-            });
-            const data = await res.json();
-            if (!res.ok) { toast(data.error || "Failed to return", "error"); return; }
-            toast(data.fine > 0 ? `Returned! Fine: ₹${data.fine}` : "Book returned successfully", "success");
-            fetchBooks(search);
-        } catch { toast("Server error", "error"); }
-    };
-
     const handleDelete = async (isbn, bookno) => {
         try {
             const res  = await fetch(`${API}/books/${isbn}/${bookno}`, { method: "DELETE", headers });
@@ -330,17 +316,12 @@ function ManageBooks() {
                                             ) : "—"}
                                         </td>
                                         <td>
-                                            {b.fine > 0
-                                                ? <span className="chip danger">₹{Number(b.fine).toFixed(2)}</span>
+                                            {(b.current_fine || b.fine) > 0
+                                                ? <span className="chip danger">₹{Number(b.current_fine || b.fine).toFixed(2)}</span>
                                                 : <span style={{ opacity: 0.4 }}>₹0.00</span>}
                                         </td>
                                         <td>
                                             <div style={{ display: "flex", gap: "0.5rem" }}>
-                                                {b.status === 'borrowed' && (
-                                                    <button className="btn btn-green btn-sm" onClick={() => handleReturnBook(b)}>
-                                                        📥 Return
-                                                    </button>
-                                                )}
                                                 <button className="btn btn-ghost btn-sm" onClick={() => setDetailBook(b)}>🔍</button>
                                                 <button className="btn btn-yellow btn-sm" id={`edit-${b.bookno}`} onClick={() => openEdit(b)}>✏️ Edit</button>
                                                 <button className="btn btn-red    btn-sm" id={`delete-${b.bookno}`} onClick={() => setDelConfirm(b)}>🗑️</button>
@@ -356,7 +337,7 @@ function ManageBooks() {
 
             {/* Add / Edit Modal */}
             {modal && (
-                <div className="modal-overlay" id="add-book-modal-overlay" onClick={() => setModal(false)}>
+                <div className="modal-overlay" id="add-book-modal-overlay">
                     <div className="modal modal-wide"
                         style={{ display: "flex", flexDirection: "column", maxHeight: "92vh", padding: 0, overflow: "hidden" }}
                         onClick={e => e.stopPropagation()}
@@ -424,7 +405,7 @@ function ManageBooks() {
                                     <div className="form-group">
                                         <label htmlFor="book-date_taken">Date Taken</label>
                                         <input id="book-date_taken" type="datetime-local"
-                                            max={new Date().toISOString().slice(0, 16)}
+                                            max={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                                             value={form.date_taken}
                                             onChange={e => setForm({ ...form, date_taken: e.target.value })}
                                         />
@@ -438,11 +419,11 @@ function ManageBooks() {
                                         />
                                     </div>
                                     <div className="form-group">
-                                        <label htmlFor="book-fine">Fine (₹)</label>
-                                        <input id="book-fine" type="number" min="0" step="0.01"
-                                            placeholder="0.00"
-                                            value={form.fine}
-                                            onChange={e => setForm({ ...form, fine: e.target.value })}
+                                        <label htmlFor="book-fine">Fine (₹) <span className="field-hint">(Auto-calculated)</span></label>
+                                        <input id="book-fine" type="number"
+                                            value={form.fine || 0}
+                                            readOnly 
+                                            className="form-readonly"
                                         />
                                     </div>
                                 </div>
@@ -462,7 +443,7 @@ function ManageBooks() {
 
             {/* Borrow Details Modal */}
             {detailBook && (
-                <div className="modal-overlay" onClick={() => setDetailBook(null)}>
+                <div className="modal-overlay">
                     <div className="modal modal-wide"
                         style={{ display: "flex", flexDirection: "column", maxHeight: "92vh", padding: 0, overflow: "hidden" }}
                         onClick={e => e.stopPropagation()}
@@ -494,7 +475,7 @@ function ManageBooks() {
                                     ["User ID",      detailBook.user_id ?? "—"],
                                     ["Date Taken",   fmtDateTime(detailBook.date_taken)],
                                     ["Return By",    fmtDateTime(detailBook.return_date)],
-                                    ["Fine",         detailBook.fine > 0 ? `₹${Number(detailBook.fine).toFixed(2)}` : "₹0.00"],
+                                    ["Fine",         (detailBook.current_fine || detailBook.fine) > 0 ? `₹${Number(detailBook.current_fine || detailBook.fine).toFixed(2)}` : "₹0.00"],
                                 ].map(([k, v]) => (
                                     <div key={k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--bg-alt)", paddingBottom: "0.6rem" }}>
                                         <span style={{ color: "var(--ink-4)", fontSize: "0.82rem", fontWeight: 500 }}>{k}</span>
@@ -514,7 +495,7 @@ function ManageBooks() {
 
             {/* Delete Confirm */}
             {delConfirm && (
-                <div className="modal-overlay" onClick={() => setDelConfirm(null)}>
+                <div className="modal-overlay">
                     <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>🗑️ Delete Book?</h2>

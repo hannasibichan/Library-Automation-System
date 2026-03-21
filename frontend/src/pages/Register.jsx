@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toast";
+import "../styles/Login.css";
 import "../styles/Register.css";
 
 const API = "http://localhost:5000/api";
@@ -41,7 +42,7 @@ function Register() {
             }
             sessionStorage.setItem("token", data.token);
             sessionStorage.setItem("user", JSON.stringify(data.user));
-            toast("Account created! Welcome to Bibliotheca.", "success");
+            toast("Account created! Welcome to SmartStack.", "success");
             navigate("/dashboard");
         } catch {
             toast("Cannot reach server. Is the backend running?", "error");
@@ -56,7 +57,7 @@ function Register() {
             <nav className="auth-navbar">
                 <Link to="/" className="auth-nav-brand">
                     <span className="auth-nav-logo">📖</span>
-                    <span className="auth-nav-title">Bibliotheca</span>
+                    <span className="auth-nav-title">SmartStack</span>
                 </Link>
                 <div className="auth-nav-links">
                     <Link to="/" className="auth-nav-back" id="register-back-home">
@@ -70,12 +71,15 @@ function Register() {
 
             <div className="auth-body register-body">
                 <div className="auth-card clay-card fade-in-up" style={{ maxWidth: 520 }}>
+                    <Link to="/" className="auth-card-back" id="register-card-back">
+                        ← Back to Home
+                    </Link>
                     <div className="clay-blob clay-blob-1"></div>
                     <div className="clay-blob clay-blob-2"></div>
 
                     <div className="auth-logo">
                         <span className="logo-icon">🎓</span>
-                        <h1>Join Bibliotheca</h1>
+                        <h1>Join SmartStack</h1>
                         <p>Create your student or faculty account</p>
                     </div>
 

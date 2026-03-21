@@ -46,7 +46,7 @@ function LibrarianLogin() {
             <nav className="auth-navbar auth-navbar-admin">
                 <Link to="/" className="auth-nav-brand">
                     <span className="auth-nav-logo">🏛️</span>
-                    <span className="auth-nav-title">Bibliotheca Admin</span>
+                    <span className="auth-nav-title">SmartStack Admin</span>
                 </Link>
                 <div className="auth-nav-links">
                     <Link to="/" className="auth-nav-back" id="lib-back-home">
@@ -60,6 +60,9 @@ function LibrarianLogin() {
 
             <div className="auth-body">
                 <div className="auth-card clay-card clay-card-admin fade-in-up">
+                    <Link to="/" className="auth-card-back" id="lib-card-back">
+                        ← Back to Home
+                    </Link>
                     <div className="clay-blob clay-blob-admin-1"></div>
                     <div className="clay-blob clay-blob-admin-2"></div>
 

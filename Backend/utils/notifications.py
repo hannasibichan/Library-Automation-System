@@ -16,8 +16,8 @@ def send_due_date_reminders(app, mail):
             db = mysql.connector.connect(**DB_CONFIG)
             cur = db.cursor(dictionary=True)
             
-            # Cases to check: Due Today (0) and Due in 2 days
-            for days in [0, 2]:
+            # Cases to check: Due Today (0), Tomorrow (1), and in 2 days
+            for days in [0, 1, 2]:
                 target_date = (datetime.datetime.now() + datetime.timedelta(days=days)).date()
                 
                 # Find users with books due on that date
@@ -31,8 +31,17 @@ def send_due_date_reminders(app, mail):
                 reminders = cur.fetchall()
                 
                 for r in reminders:
-                    is_today = (days == 0)
-                    send_reminder_email(mail, r['email'], r['name'], r['title'], r['return_date'], is_today)
+                    if days == 0:
+                        status_text = "is due for return <b>TODAY</b>"
+                        is_today = True
+                    elif days == 1:
+                        status_text = "is due for return <b>TOMORROW</b>"
+                        is_today = False
+                    else:
+                        status_text = f"is due for return in <b>{days} days</b>"
+                        is_today = False
+                    
+                    send_reminder_email(mail, r['email'], r['name'], r['title'], r['return_date'], is_today, status_text)
                     
             cur.close()
             db.close()
@@ -62,17 +71,17 @@ def check_expired_reservations(app):
         except Exception as e:
             print(f"Reservation Expiry Task Error: {e}")
 
-def send_reminder_email(mail, email, name, title, due_date, is_today=False):
+def send_reminder_email(mail, email, name, title, due_date, is_today=False, status_text=None):
     formatted_date = due_date.strftime('%B %d, %Y')
     
-    subject = "⚠️ Bibliotheca - Book Due TODAY" if is_today else "⏰ Bibliotheca - Return Date Reminder"
+    subject = "⚠️ SmartStack - Book Due TODAY" if is_today else "⏰ SmartStack - Return Date Reminder"
     
     msg = Message(
         subject=subject,
         recipients=[email]
     )
     
-    status_text = "is due for return <b>TODAY</b>:" if is_today else f"is due for return on:"
+    status_text = status_text or ("is due for return <b>TODAY</b>:" if is_today else f"is due for return on:")
     sub_text = "Please return it as soon as possible to avoid fines." if is_today else "Please return it by the due date to avoid the tiered fine penalty."
 
     msg.html = f"""
@@ -85,7 +94,7 @@ def send_reminder_email(mail, email, name, title, due_date, is_today=False):
         </div>
         <p style="color: #64748b; font-size: 14px;">{sub_text}</p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-        <p style="font-size: 11px; color: #94a3b8; text-align: center;">Bibliotheca Library Automation System</p>
+        <p style="font-size: 11px; color: #94a3b8; text-align: center;">SmartStack Library Automation System</p>
     </div>
     """
     try:
@@ -132,7 +141,7 @@ def notify_librarians_on_request(mail, user_name, book_title, expiry_time):
             
             <p style="font-size: 14px; color: #475569;">Please log in to the Librarian Dashboard to manage this request.</p>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-            <p style="font-size: 11px; color: #94a3b8; text-align: center;">Bibliotheca Library Automation System</p>
+            <p style="font-size: 11px; color: #94a3b8; text-align: center;">SmartStack Library Automation System</p>
         </div>
         """
         mail.send(msg)

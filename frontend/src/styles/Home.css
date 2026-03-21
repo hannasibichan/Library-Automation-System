@@ -135,9 +135,9 @@
 
 .hero-title {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    font-size: clamp(2rem, 8vw, 3.8rem);
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.2;
     color: var(--ink);
     margin-bottom: 1.25rem;
     letter-spacing: -0.035em;
@@ -157,9 +157,14 @@
 
 .hero-actions {
     display: flex;
-    gap: 0.85rem;
+    gap: 1rem;
     justify-content: center;
     flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .hero-actions { flex-direction: column; width: 100%; }
+    .hero-actions .btn { width: 100%; }
 }
 
 .hero-extra {
@@ -195,10 +200,14 @@
 .strip-stat {
     flex: 1;
     min-width: 140px;
-    max-width: 200px;
+    max-width: 240px;
     text-align: center;
-    padding: 0 2rem;
+    padding: 0.75rem 1.5rem;
     border-right: 1px solid var(--border);
+}
+@media (max-width: 768px) {
+    .strip-stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .strip-stat:last-child { border-bottom: none; }
 }
 
 .strip-stat:last-child {
@@ -356,27 +365,21 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 1024px) {
+    .hero { padding: 4rem 2rem 3rem; }
+}
+
+@media (max-width: 768px) {
+    .stats-strip { grid-template-columns: repeat(2, 1fr); display: grid; padding: 1.5rem; }
+    .strip-stat { max-width: none; border-right: 1px solid var(--border); border-bottom: none; }
+    .strip-stat:nth-child(2n) { border-right: none; }
+    .strip-stat:nth-child(n+3) { border-top: 1px solid var(--border); }
+}
+
 @media (max-width: 640px) {
-    .stats-strip {
-        flex-direction: column;
-        align-items: center;
-        gap: 1.25rem;
-    }
-
-    .strip-stat {
-        border-right: none;
-    }
-
-    .cta-card {
-        padding: 2.5rem 1.75rem;
-    }
-
-    .hero {
-        padding: 4rem 1.5rem 3rem;
-    }
-
-    .hero-actions {
-        flex-direction: column;
-        align-items: center;
-    }
+    .stats-strip { grid-template-columns: 1fr; }
+    .strip-stat { border-right: none; border-top: 1px solid var(--border); }
+    .strip-stat:first-child { border-top: none; }
+    .cta-card { padding: 2.5rem 1.75rem; border-radius: var(--radius-lg); }
+    .hero { min-height: fit-content; padding: 3rem 1.25rem 2rem; }
 }

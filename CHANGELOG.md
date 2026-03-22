@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **SmartStack Branding:** Complete rename from "Library MS" to "SmartStack".
 - **Librarian Registration:** Existing librarians can now add new librarian accounts via the UI and API.
-- **Glassmorphic UI v3:** Enhanced all pages with a premium dark-themed design.
+- **Glassmorphic UI v3:** Enhanced all pages with a premium, Warm Neumorphic Light design.
 - **Animations:** Added page-level entrance animations, staggered card reveals, and glowing hover states.
 - **Project Documentation:** Added `README.md`, `LICENSE`, `CONTRIBUTING.md`, and `CHANGELOG.md`.
 

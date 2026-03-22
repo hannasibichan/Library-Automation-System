@@ -9,9 +9,9 @@ SmartStack is a premium, modern library management system designed for students,
 
 - **For Students & Faculty:**
   - Browse available books with advanced search.
-  - Borrow and return books with a single click.
-  - Real-time notifications for book events.
-  - Profile tracking for borrowed books and history.
+  - **Request & Pickup:** Reserve books online and visit the library within **4 hours** to confirm the pickup.
+  - **Real-time Notifications:** Receive email alerts when your request is ready or if it expires.
+  - Profile tracking for borrowed books, due dates, and fine history.
 - **For Librarians (Admin):**
   - Powerful dashboard with library statistics.
   - Manage book inventory (Add, Edit, Remove).
@@ -19,7 +19,7 @@ SmartStack is a premium, modern library management system designed for students,
   - **Export Reports:** Download CSV and professional PDF reports for inventory, activity logs, registered users, active borrowings, and pending requests.
   - Add new librarians to the system.
 - **Visuals & UX:**
-  - Premium Dark Mode with ambient glow effects.
+  - Premium Light Mode with Warm Neumorphic aesthetics.
   - Smooth page transitions and staggered entrance animations.
   - **Mobile Optimized:** Enhanced responsiveness with consistent button sizing and touch-friendly navigation.
 

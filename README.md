@@ -16,15 +16,17 @@ SmartStack is a premium, modern library management system designed for students,
   - Powerful dashboard with library statistics.
   - Manage book inventory (Add, Edit, Remove).
   - Manage users and track borrowing records.
+  - **Export Reports:** Download CSV and professional PDF reports for inventory, activity logs, registered users, active borrowings, and pending requests.
   - Add new librarians to the system.
 - **Visuals & UX:**
   - Premium Dark Mode with ambient glow effects.
   - Smooth page transitions and staggered entrance animations.
-  - Fully responsive design for all devices.
+  - **Mobile Optimized:** Enhanced responsiveness with consistent button sizing and touch-friendly navigation.
 
 ## 🛠️ Technology Stack
 
 - **Frontend:** React, HTML5, Vanilla CSS3 (Custom Design System).
+- **Reporting:** jsPDF, jsPDF-AutoTable (PDF Generation).
 - **Backend:** Flask (Python), JWT Authentication, Bcrypt hashing.
 - **Database:** MySQL.
 - **Styling:** Custom Vanilla CSS with CSS Variables.
@@ -54,8 +56,25 @@ SmartStack is a premium, modern library management system designed for students,
    DB_PASSWORD=your_mysql_password
    DB_DATABASE=library_db
    JWT_SECRET=your_secret_key
+   
+   # Email Settings (for notifications)
+   MAIL_SERVER=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USE_TLS=True
+   MAIL_USERNAME=your_email@gmail.com
+   MAIL_PASSWORD=your_app_password
+   MAIL_DEFAULT_SENDER=your_email@gmail.com
    ```
-3. Install dependencies:
+
+   > [!TIP]
+   > **How to get a Gmail App Password:**
+   > 1. Go to your [Google Account Settings](https://myaccount.google.com/).
+   > 2. Enable **2-Step Verification**.
+   > 3. Search for **"App Passwords"** or visit the [App Passwords](https://myaccount.google.com/apppasswords) page.
+   > 4. Select **"Other"**, name it "SmartStack", and click **Generate**.
+   > 5. Use the 16-character code as your `MAIL_PASSWORD`.
+
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```

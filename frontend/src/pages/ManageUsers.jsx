@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useToast } from "../components/Toast";
 import { SkeletonTable } from "../components/SkeletonLoader";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "../styles/ManageUsers.css";
 
 import config from "../config";
@@ -35,17 +37,49 @@ function ManageUsers() {
 
     // CSV export
     const handleExport = () => {
-        const rows = [
-            ["ID", "Name", "Email", "Address", "Role", "Books Borrowed", "Joined"],
-            ...users.map(u => [u.user_id, u.name, u.email, u.address || "", u.role, u.books_borrowed, fmt(u.created_at)])
-        ];
-        const csv = rows.map(r => r.map(v => `"${v}"`).join(",")).join("\n");
-        const blob = new Blob([csv], { type: "text/csv" });
+        const headers = ["ID", "Name", "Email", "Address", "Role", "Borrowed", "Joined"];
+        const rows = users.map(u => [u.user_id, u.name, u.email, u.address || "-", u.role, u.books_borrowed, fmt(u.created_at)]);
+        const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+        const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "library_users.csv"; a.click();
-        URL.revokeObjectURL(url);
+        a.href = url; a.download = `library_users_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
         toast("Users exported as CSV!", "success");
+    };
+
+    const handleExportPDF = () => {
+        if (!users.length) return toast("No users to export", "error");
+        const doc = new jsPDF('p', 'mm', 'a4');
+        doc.setFontSize(18);
+        doc.text("Registered Library Users Report", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 30);
+
+        const tableHeaders = [["ID", "Name", "Email", "Role", "Borrowed", "Joined"]];
+        const tableRows = users.map(u => [
+            `#${u.user_id}`,
+            u.name,
+            u.email,
+            u.role.toUpperCase(),
+            `${u.books_borrowed} / 5`,
+            fmt(u.created_at)
+        ]);
+
+        autoTable(doc, {
+            startY: 35,
+            head: tableHeaders,
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            styles: { fontSize: 8.5 },
+            alternateRowStyles: { fillColor: [245, 243, 255] },
+            margin: { top: 35 }
+        });
+
+        doc.save(`library_users_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast("User PDF Report generated!", "success");
     };
 
     // Fetch borrowed books for expanded row
@@ -68,10 +102,13 @@ function ManageUsers() {
 
                 <div className="section-header">
                     <h2>👥 Registered Users</h2>
-                    <div style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap" }}>
+                    <div className="header-actions">
                         <span className="chip">{users.length} total</span>
-                        <button className="btn btn-blue btn-sm" id="export-csv-btn" onClick={handleExport}>
-                            📥 Export CSV
+                        <button className="btn btn-outline btn-sm" onClick={handleExport}>
+                            📥 CSV
+                        </button>
+                        <button className="btn btn-outline btn-sm" onClick={handleExportPDF} style={{ background: "white", color: "var(--brand-dark)" }}>
+                            📄 PDF
                         </button>
                     </div>
                 </div>

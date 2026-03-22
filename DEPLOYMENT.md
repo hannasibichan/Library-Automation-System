@@ -60,3 +60,10 @@ If using Netlify, ensure a `public/_redirects` file exists with:
 1. Verify that the frontend can communicate with the backend.
 2. Check if CORS errors occur (ensure `FRONTEND_URL` in backend matches exactly).
 3. Test the login and borrowing flow with the production database.
+
+---
+
+## 🛠️ Troubleshooting Reports
+- **CSV Encoding:** Our exports use a UTF-8 BOM. If characters still look strange in old versions of Excel, try importing via `Data > From Text/CSV`.
+- **PDF Generation:** PDF creation happens on the client-side. Ensure `jspdf` and `jspdf-autotable` are correctly bundled during build.
+- **Mobile Layout:** If buttons overlap, check that the global CSS variables for spacing haven't been overridden in production builds.

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-03-23
+
+### Added
+- **Global Reporting Module:** Professional PDF and CSV export functionality implemented across **every management page** (Books, Users, Borrowed, Requests, and Activity Records).
+- **PDF Export Suite:** Integrated `jsPDF` and `jsPDF-AutoTable` for high-quality, branded document generation with auto-formatting and timestamps.
+- **Enhanced CSV Reporting:** Added **UTF-8 BOM support** to ensure exports open perfectly in Microsoft Excel without character corruption.
+- **Human-Readable Auditing:** All tables and reports now prioritize **Librarian Names** and **Borrower Names** over obscure ID numbers.
+- **Detailed Configuration:** Updated `README.md` with complete instructions for `MAIL_USERNAME` and Gmail **App Password** setup.
+
+### Fixed
+- **Mobile Header Harmony:** Fixed layout issues on mobile devices where buttons in headers (like CSV/PDF/Add) had mismatched heights.
+- **Excel Symbol Corruption:** Replaced special characters like `—` and `₹` in CSVs with standard ASCII alternatives (`-` and `Rs`) to prevent encoding bugs.
+- **Robust Date Parsing:** Switched all CSV date exports to the universal `YYYY-MM-DD` standard for reliable sorting across different spreadsheet locales.
+- **Reporting Bugfix:** Resolved `doc.autoTable is not a function` JS runtime error by updating the AutoTable integration pattern.
+
 ## [1.1.0] - 2025-03-11
 
 ### Added

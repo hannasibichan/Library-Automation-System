@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import { useToast } from "../components/Toast";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "../styles/Global.css";
 
 import config from "../config";
@@ -53,6 +55,59 @@ function ManageBorrowed() {
         } catch { toast("Server error", "error"); }
     };
 
+    const handleExportCSV = () => {
+        if (!borrowed.length) return toast("No borrowings to export", "error");
+        const headers = ["User", "User Email", "Book Title", "ISBN", "Book No", "Date Taken", "Return date", "Fine"];
+        const rows = borrowed.map(b => [
+            b.user_name, b.user_email, b.title, b.ISBN, b.bookno,
+            b.date_taken ? new Date(b.date_taken).toISOString().split('T')[0] : "-",
+            b.return_date ? new Date(b.return_date).toISOString().split('T')[0] : "-",
+            b.current_fine || b.fine || 0
+        ]);
+        const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+        const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `borrowed_books_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        toast("Borrowings exported as CSV!", "success");
+    };
+
+    const handleExportPDF = () => {
+        if (!borrowed.length) return toast("No borrowings to export", "error");
+        const doc = new jsPDF('l', 'mm', 'a4');
+        doc.setFontSize(18);
+        doc.text("All Active Borrowings", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 30);
+
+        const tableHeaders = [["User", "Book Title", "ISBN", "No", "Date Taken", "Return By", "Fine"]];
+        const tableRows = borrowed.map(b => [
+            b.user_name,
+            b.title,
+            b.ISBN,
+            b.bookno,
+            b.date_taken ? new Date(b.date_taken).toLocaleDateString() : "-",
+            b.return_date ? new Date(b.return_date).toLocaleDateString() : "-",
+            `Rs ${Number(b.current_fine || b.fine || 0).toFixed(2)}`
+        ]);
+
+        autoTable(doc, {
+            startY: 35,
+            head: tableHeaders,
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            styles: { fontSize: 8 },
+            alternateRowStyles: { fillColor: [245, 243, 255] },
+            margin: { top: 35 }
+        });
+
+        doc.save(`borrowed_books_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast("Borrowing PDF Report generated!", "success");
+    };
+
     return (
         <div className="page-wrapper">
             <Navbar />
@@ -61,6 +116,10 @@ function ManageBorrowed() {
                     <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                         <h2>📖 Manage Borrowed Books</h2>
                         <span className="chip">{filtered.length} active</span>
+                    </div>
+                    <div className="header-actions">
+                        <button className="btn btn-outline btn-sm" onClick={handleExportCSV}>📥 CSV</button>
+                        <button className="btn btn-outline btn-sm" onClick={handleExportPDF} style={{ background: "white", color: "var(--brand-dark)" }}>📄 PDF</button>
                     </div>
                 </div>
 

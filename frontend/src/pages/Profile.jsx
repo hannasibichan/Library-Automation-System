@@ -114,7 +114,7 @@ function Profile() {
                         <h1 className="profile-name">{user.name}</h1>
                         <div className="profile-meta">
                             <span className="role-badge">{user.role === "librarian" ? "🛡️" : user.role === "faculty" ? "🎓" : "📚"} {user.role}</span>
-                            <span style={{ color: "var(--ink-4)", fontSize: "0.75rem", fontWeight: 500 }}>{user.email}</span>
+                            <span className="email-text">{user.email}</span>
                             {user.role !== "librarian" && booksCount > 0 && (
                                 <span className={`chip ${booksCount >= 5 ? "danger" : "borrowed"}`}>
                                     📖 {booksCount}/5 books borrowed

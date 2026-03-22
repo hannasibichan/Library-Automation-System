@@ -70,7 +70,7 @@ function LibrarianDashboard() {
                     <h1>Librarian Dashboard 📋</h1>
                     <div className="welcome-meta">
                         <span className="role-badge">🏛️ Librarian</span>
-                        <span style={{ color: "rgba(200,190,255,0.5)", fontSize: "0.8rem" }}>{user.email}</span>
+                        <span className="email-text">{user.email}</span>
                         <button 
                             className="btn btn-outline btn-sm" 
                             style={{ marginLeft: "auto" }}
@@ -105,7 +105,7 @@ function LibrarianDashboard() {
                 {/* Borrow utilization bar */}
                 {!loading && total > 0 && (
                     <div className="borrow-usage-bar" style={{ marginBottom: "1.75rem" }}>
-                        <div className="borrow-progress-header" style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", color: "rgba(200,190,255,0.7)", marginBottom: "0.6rem" }}>
+                        <div className="borrow-progress-header" style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem", color: "var(--ink-3)", marginBottom: "0.6rem" }}>
                             <span>📊 Borrow utilization across all books</span>
                             <span style={{ color: "#a78bfa", fontWeight: 700 }}>{pct}% in use</span>
                         </div>

@@ -140,7 +140,7 @@
 .navbar-toggle.open span:nth-child(2) { opacity: 0; }
 .navbar-toggle.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .navbar { 
         padding: 0.7rem 1.25rem;
         display: flex;
@@ -153,12 +153,22 @@
     }
 
     .navbar-brand {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        position: static;
+        transform: none;
         margin: 0;
         z-index: 5;
         white-space: nowrap;
+        order: 2;
+        flex: 1;
+        margin-left: 0.85rem;
+    }
+    
+    .navbar-toggle {
+        order: 1;
+    }
+    
+    .navbar-right {
+        order: 3;
     }
     
     .navbar-links {

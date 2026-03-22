@@ -48,28 +48,78 @@ def send_due_date_reminders(app, mail):
         except Exception as e:
             print(f"Notification Task Error: {e}")
 
-def check_expired_reservations(app):
+def check_expired_reservations(app, mail):
     """
     Releases books that were requested but not picked up within the time limit.
+    Sends cancellation email to users.
     """
     with app.app_context():
         try:
             load_dotenv_settings()
             db = mysql.connector.connect(**DB_CONFIG)
-            cur = db.cursor()
+            cur = db.cursor(dictionary=True)
             
             now = datetime.datetime.now()
-            query = "UPDATE book SET user_id=NULL, status='available', request_expiry=NULL WHERE status='requested' AND request_expiry < %s"
-            cur.execute(query, (now,))
             
-            if cur.rowcount > 0:
-                print(f"Released {cur.rowcount} expired reservations.")
-                db.commit()
+            # 1. First, find which books are expiring and who they belong to
+            query_find = """
+                SELECT b.book_id, b.title, u.email, u.name 
+                FROM book b
+                JOIN user u ON b.user_id = u.user_id
+                WHERE b.status = 'requested' AND b.request_expiry < %s
+            """
+            cur.execute(query_find, (now,))
+            expired_requests = cur.fetchall()
+            
+            if not expired_requests:
+                cur.close()
+                db.close()
+                return
+
+            # 2. Release the books
+            query_update = "UPDATE book SET user_id=NULL, status='available', request_expiry=NULL WHERE status='requested' AND request_expiry < %s"
+            cur.execute(query_update, (now,))
+            db.commit()
+            
+            print(f"Released {cur.rowcount} expired reservations.")
+
+            # 3. Notify users
+            for req in expired_requests:
+                send_cancellation_email(mail, req['email'], req['name'], req['title'])
                 
             cur.close()
             db.close()
         except Exception as e:
             print(f"Reservation Expiry Task Error: {e}")
+
+def send_cancellation_email(mail, email, name, title):
+    """
+    Sends mail informing user their borrow request expired.
+    """
+    msg = Message(
+        subject="❌ SmartStack - Borrow Request Expired",
+        recipients=[email]
+    )
+    
+    msg.html = f"""
+    <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #fffafc;">
+        <h2 style="color: #dc2626; margin-top: 0;">Borrow Request Expired</h2>
+        <p>Hi <b>{name}</b>,</p>
+        <p>Unfortunately, your borrow request for <b>"{title}"</b> has expired because it was not collected within the 4-hour window.</p>
+        
+        <div style="margin: 20px 0; padding: 15px; border-radius: 8px; background-color: #fef2f2; border: 1px solid #fecaca; text-align: center;">
+            <p style="margin: 0; color: #991b1b; font-size: 14px;">The book has been returned to the available collection for other users.</p>
+        </div>
+        
+        <p style="font-size: 14px; color: #475569;">You can submit a new request if the book is still available.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        <p style="font-size: 11px; color: #94a3b8; text-align: center;">SmartStack Library Automation System</p>
+    </div>
+    """
+    try:
+        mail.send(msg)
+    except Exception as e:
+        print(f"Failed to send cancellation to {email}: {e}")
 
 def send_reminder_email(mail, email, name, title, due_date, is_today=False, status_text=None):
     formatted_date = due_date.strftime('%B %d, %Y')

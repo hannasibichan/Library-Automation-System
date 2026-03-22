@@ -44,7 +44,7 @@ def create_app():
         # 2. Schedule the reservation expiry task to run every 10 minutes
         @scheduler.task('interval', id='reservation_expiry_job', minutes=10)
         def scheduled_reservation_job():
-            check_expired_reservations(app)
+            check_expired_reservations(app, mail)
 
         # 3. Schedule the fine sync task to run every 5 minutes
         from utils.fine_utils import update_db_fines

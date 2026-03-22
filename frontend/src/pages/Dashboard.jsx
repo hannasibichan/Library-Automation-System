@@ -77,7 +77,7 @@ function Dashboard() {
                     <h1>Welcome back, {user.name?.split(" ")[0]}! 👋</h1>
                     <div className="welcome-meta">
                         <span className="role-badge">{user.role === "faculty" ? "🎓" : "📚"} {user.role}</span>
-                        <span style={{ color: "rgba(200,190,255,0.5)", fontSize: "0.8rem" }}>{user.email}</span>
+                        <span className="email-text">{user.email}</span>
                     </div>
                 </div>
 

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import Navbar from "../components/Navbar";
 import { useToast } from "../components/Toast";
 import { SkeletonTable } from "../components/SkeletonLoader";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "../styles/ManageBooks.css";
 
 import config from "../config";
@@ -280,6 +282,39 @@ function ManageBooks() {
         link.click();
         document.body.removeChild(link);
     };
+    const handleExportPDF = () => {
+        if (!books.length) return toast("No books to export", "error");
+        
+        const doc = new jsPDF('l', 'mm', 'a4');
+        doc.setFontSize(18);
+        doc.text("Library Automation System - Book Catalog", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 30);
+        
+        const tableHeaders = [["ISBN", "Book#", "Title", "Author", "Status", "Date Taken", "Return By", "Fine (Rs)"]];
+        const tableRows = books.map(b => [
+            b.ISBN, b.bookno, b.title, b.author, 
+            b.status.toUpperCase(),
+            b.date_taken ? new Date(b.date_taken).toLocaleDateString('en-IN') : "-",
+            b.return_date ? new Date(b.return_date).toLocaleDateString('en-IN') : "-",
+            `Rs ${Number(b.current_fine || b.fine || 0).toFixed(2)}`
+        ]);
+
+        autoTable(doc, {
+            startY: 35,
+            head: tableHeaders,
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            styles: { fontSize: 8, cellPadding: 3 },
+            alternateRowStyles: { fillColor: [245, 243, 255] },
+            margin: { top: 35 }
+        });
+
+        doc.save(`library_catalog_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast("PDF Report generated!", "success");
+    };
 
     return (
         <div className="page-wrapper">
@@ -290,7 +325,10 @@ function ManageBooks() {
                     <h2>📚 Manage Books</h2>
                     <div className="header-actions">
                         <button className="btn btn-csv-download" onClick={handleExportCSV}>
-                            📥 Download CSV
+                            📥 CSV
+                        </button>
+                        <button className="btn btn-outline" onClick={handleExportPDF} style={{ background: "white", color: "var(--brand-dark)" }}>
+                            📄 PDF
                         </button>
                         <button className="btn btn-violet" id="add-book-btn" onClick={openAdd}>+ Add Book</button>
                     </div>

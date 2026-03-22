@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import { useToast } from "../components/Toast";
 import { SkeletonTable } from "../components/SkeletonLoader";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import "../styles/ManageRecords.css";
 
 import config from "../config";
@@ -57,6 +59,41 @@ function ManageRecords() {
         toast("Report downloaded successfully!", "success");
     };
 
+    const handleExportPDF = () => {
+        if (!records.length) return toast("No records to export", "error");
+        
+        const doc = new jsPDF('p', 'mm', 'a4');
+        doc.setFontSize(18);
+        doc.text("Librarian Activity Audit Report", 14, 22);
+        doc.setFontSize(11);
+        doc.setTextColor(100);
+        doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 14, 30);
+        
+        const tableHeaders = [["ID", "Librarian", "Activity Type", "Book Title", "Count", "Event Time"]];
+        const tableRows = records.map(r => [
+            `#${r.book_record_id}`,
+            r.librarian_name || "-",
+            r.delete_record ? 'Deletion' : (r.update_record ? 'Update' : 'Addition'),
+            r.book_title || "-",
+            r.total_books_available,
+            fmt(r.delete_record || r.update_record || r.add_record)
+        ]);
+
+        autoTable(doc, {
+            startY: 35,
+            head: tableHeaders,
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229], textColor: 255 },
+            styles: { fontSize: 8.5 },
+            alternateRowStyles: { fillColor: [245, 243, 255] },
+            margin: { top: 35 }
+        });
+
+        doc.save(`inventory_audit_${new Date().toISOString().split('T')[0]}.pdf`);
+        toast("Audit PDF generated!", "success");
+    };
+
     return (
         <div className="page-wrapper">
             <Navbar />
@@ -66,7 +103,10 @@ function ManageRecords() {
                     <h2>📊 Librarian Activity Records</h2>
                     <div className="header-actions">
                         <button className="btn btn-outline" onClick={handleExportCSV}>
-                            📥 Download CSV
+                            📥 CSV
+                        </button>
+                        <button className="btn btn-outline" id="pdf-export-records" onClick={handleExportPDF} style={{ background: "white", color: "var(--brand-dark)" }}>
+                            📄 PDF
                         </button>
                     </div>
                 </div>

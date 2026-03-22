@@ -7,7 +7,7 @@ import config from "../config";
 const API = config.API_BASE_URL;
 
 const fmtDate = (dt) =>
-    dt ? new Date(dt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+    dt ? new Date(dt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 
 function ManageBorrowed() {
     const toast = useToast();
@@ -62,7 +62,6 @@ function ManageBorrowed() {
                         <h2>📖 Manage Borrowed Books</h2>
                         <span className="chip">{filtered.length} active</span>
                     </div>
-                    <p className="subtitle">Books currently with users</p>
                 </div>
 
                 <div className="search-bar" style={{ marginBottom: "1.5rem" }}>

@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS book (
     ISBN VARCHAR(20) NOT NULL,
     bookno VARCHAR(50) NOT NULL,
     title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) DEFAULT 'General',
     author VARCHAR(150) NOT NULL,
     publisher VARCHAR(150),
     lib_id INT,
@@ -52,10 +53,11 @@ CREATE TABLE IF NOT EXISTS book (
 CREATE TABLE IF NOT EXISTS book_record (
     book_record_id INT PRIMARY KEY AUTO_INCREMENT,
     lib_id INT,
-    add_record DATETIME DEFAULT CURRENT_TIMESTAMP,
+    book_title VARCHAR(255),
+    total_books_available INT DEFAULT 0,
+    add_record DATETIME DEFAULT NULL,
     delete_record DATETIME DEFAULT NULL,
     update_record DATETIME DEFAULT NULL,
-    total_books_available INT DEFAULT 0,
     FOREIGN KEY (lib_id) REFERENCES librarian(lib_id) ON DELETE SET NULL
 );
 
@@ -66,5 +68,5 @@ VALUES ('Admin Librarian', 'admin@library.com', '9999999999',
         '$2b$12$L5i2sZCo77cCYp5tAGstV.lSvoHDkJRcMzB6rRNx6WHQr7iHlMmKe');
 
 -- Insert a default book_record entry
-INSERT IGNORE INTO book_record (lib_id, total_books_available)
-SELECT lib_id, 0 FROM librarian WHERE email = 'admin@library.com' LIMIT 1;
+INSERT IGNORE INTO book_record (lib_id, total_books_available, add_record)
+SELECT lib_id, 0, NOW() FROM librarian WHERE email = 'admin@library.com' LIMIT 1;

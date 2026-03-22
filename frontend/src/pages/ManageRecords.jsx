@@ -14,9 +14,6 @@ function ManageRecords() {
 
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [modal, setModal] = useState(false);
-    const [editRec, setEditRec] = useState(null);
-    const [total, setTotal] = useState(0);
 
     const fetchRecords = useCallback(() => {
         setLoading(true);
@@ -29,37 +26,36 @@ function ManageRecords() {
 
     useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
-    const openAdd = () => { setEditRec(null); setTotal(0); setModal(true); };
-    const openEdit = (r) => { setEditRec(r); setTotal(r.total_books_available); setModal(true); };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const url = editRec ? `${API}/records/${editRec.book_record_id}` : `${API}/records`;
-            const method = editRec ? "PUT" : "POST";
-            const res = await fetch(url, { method, headers, body: JSON.stringify({ total_books_available: Number(total) }) });
-            const data = await res.json();
-            if (!res.ok) { toast(data.error || "Error", "error"); return; }
-            toast(editRec ? "Record updated!" : "Record created!", "success");
-            setModal(false);
-            fetchRecords();
-        } catch { toast("Server error", "error"); }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Mark this record as deleted?")) return;
-        try {
-            const res = await fetch(`${API}/records/${id}`, { method: "DELETE", headers });
-            const data = await res.json();
-            if (!res.ok) { toast(data.error || "Error", "error"); return; }
-            toast("Record marked as deleted.", "success");
-            fetchRecords();
-        } catch { toast("Server error", "error"); }
-    };
-
     const fmt = (dt) => dt
         ? new Date(dt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-        : "—";
+        : "-";
+
+    const handleExportCSV = () => {
+        if (!records.length) return toast("No records to export", "error");
+        
+        const headers = ["Record ID", "Librarian", "Activity Type", "Book Title", "Total Available", "Event Time"];
+        const rows = records.map(r => [
+            r.book_record_id,
+            r.librarian_name || "-",
+            r.delete_record ? 'Deletion' : (r.update_record ? 'Update' : 'Addition'),
+            r.book_title || "-",
+            r.total_books_available,
+            fmt(r.delete_record || r.update_record || r.add_record)
+        ]);
+
+        const csvContent = [headers, ...rows]
+            .map(e => e.map(val => `"${val}"`).join(","))
+            .join("\n");
+        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `inventory_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast("Report downloaded successfully!", "success");
+    };
 
     return (
         <div className="page-wrapper">
@@ -67,8 +63,12 @@ function ManageRecords() {
             <div className="dashboard-content">
 
                 <div className="section-header">
-                    <h2>📊 Inventory Audit Records</h2>
-                    <button className="btn btn-violet" id="add-record-btn" onClick={openAdd}>+ New Record</button>
+                    <h2>📊 Librarian Activity Records</h2>
+                    <div className="header-actions">
+                        <button className="btn btn-outline" onClick={handleExportCSV}>
+                            📥 Download CSV
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -80,30 +80,26 @@ function ManageRecords() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th><th>Librarian</th><th>Total Available</th>
-                                    <th>Created At</th><th>Updated At</th><th>Deleted At</th><th>Actions</th>
+                                    <th>ID</th><th>Librarian</th><th className="header-activity">Type</th><th>Book Title</th><th className="header-count">Total Available</th>
+                                    <th>Event Time</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {records.map((r, i) => (
                                     <tr key={r.book_record_id} style={{ animationDelay: `${i * 0.03}s` }} className="fade-in-row">
                                         <td className="record-id-cell">#{r.book_record_id}</td>
-                                        <td style={{ fontWeight: 600, color: "#e2e0ff" }}>{r.librarian_name || "—"}</td>
+                                        <td className="librarian-cell">{r.librarian_name || "—"}</td>
                                         <td>
-                                            <span className="total-books-badge">
-                                                📚 {r.total_books_available}
+                                            <span className={`chip ${r.delete_record ? 'danger' : (r.update_record ? 'borrowed' : 'available')}`}>
+                                                {r.delete_record ? '🗑️ Deletion' : (r.update_record ? '✏️ Update' : '➕ Addition')}
                                             </span>
                                         </td>
-                                        <td className="datetime-cell">{fmt(r.add_record)}</td>
-                                        <td className="datetime-cell">{fmt(r.update_record)}</td>
-                                        <td className="datetime-cell">{fmt(r.delete_record)}</td>
-                                        <td>
-                                            <div style={{ display: "flex", gap: "0.5rem" }}>
-                                                <button className="btn btn-yellow btn-sm" id={`edit-rec-${r.book_record_id}`}
-                                                    onClick={() => openEdit(r)}>✏️</button>
-                                                <button className="btn btn-red btn-sm" id={`del-rec-${r.book_record_id}`}
-                                                    onClick={() => handleDelete(r.book_record_id)}>🗑️</button>
-                                            </div>
+                                        <td className="book-title-cell">{r.book_title || "—"}</td>
+                                        <td className="total-available-cell">
+                                            {r.total_books_available}
+                                        </td>
+                                        <td className="datetime-cell">
+                                            {fmt(r.delete_record || r.update_record || r.add_record)}
                                         </td>
                                     </tr>
                                 ))}
@@ -112,31 +108,6 @@ function ManageRecords() {
                     </div>
                 )}
             </div>
-
-            {modal && (
-                <div className="modal-overlay" onClick={() => setModal(false)}>
-                    <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{editRec ? "✏️ Edit Record" : "➕ New Audit Entry"}</h2>
-                            <button className="modal-close" onClick={() => setModal(false)}>✕</button>
-                        </div>
-                        <form className="auth-form" onSubmit={handleSubmit} id="record-form">
-                            <div className="form-group">
-                                <label htmlFor="total-available">Total Books in System</label>
-                                <input id="total-available" type="number" min="0" placeholder="e.g. 150"
-                                    value={total} onChange={e => setTotal(e.target.value)} required />
-                                <span className="field-hint">Specify current physical inventory count.</span>
-                            </div>
-                            <div className="modal-actions">
-                                <button type="button" className="btn btn-outline" onClick={() => setModal(false)}>Cancel</button>
-                                <button type="submit" className="btn btn-violet" id="record-save-btn">
-                                    {editRec ? "Update Record" : "Save Record"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

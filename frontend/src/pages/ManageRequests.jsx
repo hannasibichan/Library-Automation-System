@@ -85,7 +85,6 @@ function ManageRequests() {
                         <h2>⏳ Manage Borrow Requests</h2>
                         <span className="chip">{filtered.length} pending</span>
                     </div>
-                    <p className="subtitle">Pending pickups from users</p>
                 </div>
 
                 <div className="search-bar" style={{ marginBottom: "1.5rem" }}>

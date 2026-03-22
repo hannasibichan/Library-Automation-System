@@ -142,7 +142,7 @@ function ManageLibrarians() {
                             <tbody>
                                 {filtered.map(l => (
                                     <tr key={l.lib_id}>
-                                        <td style={{ fontWeight: 700, color: "var(--indigo)" }}>#{l.lib_id}</td>
+                                        <td style={{ fontWeight: 700, color: "var(--brand)" }}>#{l.lib_id}</td>
                                         <td>
                                             <div style={{ fontWeight: 600 }}>{l.name} {l.lib_id === 1 && "👑"}</div>
                                         </td>

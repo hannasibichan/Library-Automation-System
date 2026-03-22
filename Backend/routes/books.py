@@ -141,6 +141,7 @@ def add_book():
     image_filename = _save_image(cover_image)
 
     # Optional borrow fields (when adding a book that is already borrowed)
+    category    = data.get('category', 'General').strip()
     user_id     = data.get('user_id') or None
     date_taken  = data.get('date_taken') or None
     return_date = data.get('return_date') or None
@@ -180,14 +181,15 @@ def add_book():
                 return jsonify({'error': 'This user has overdue books. Return them before borrowing more.'}), 403
     try:
         cur.execute(
-            'INSERT INTO book (ISBN, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image, status) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-            (isbn, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, image_filename, status)
+            'INSERT INTO book (ISBN, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, cover_image, status, category) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            (isbn, bookno, title, author, publisher, lib_id, user_id, date_taken, return_date, fine, image_filename, status, category)
         )
+        # Automatically create a new audit record for this action
         cur.execute(
-            'UPDATE book_record SET total_books_available = total_books_available + 1, '
-            'add_record = %s WHERE lib_id = %s ORDER BY book_record_id DESC LIMIT 1',
-            (datetime.datetime.now(), lib_id)
+            'INSERT INTO book_record (lib_id, book_title, total_books_available, add_record) '
+            'VALUES (%s, %s, (SELECT COUNT(*) FROM book WHERE status = "available"), %s)',
+            (lib_id, title, datetime.datetime.now())
         )
         db.commit()
     except Exception as e:
@@ -213,10 +215,11 @@ def update_book(isbn, bookno):
     author    = data.get('author', '').strip()
     publisher = data.get('publisher', '').strip()
     bookno    = data.get('bookno', '').strip()
-    lib_id    = data.get('lib_id') or request.current_user['lib_id']
+    lib_id    = request.current_user['lib_id']
     cover_image = data.get('cover_image')
 
     # Optional borrow fields – librarian can manually set/clear them
+    category    = data.get('category', 'General').strip()
     user_id     = data.get('user_id') or None
     date_taken  = data.get('date_taken') or None
     return_date = data.get('return_date') or None
@@ -262,14 +265,15 @@ def update_book(isbn, bookno):
     try:
         cur.execute(
             'UPDATE book SET title=%s, author=%s, publisher=%s, ISBN=%s, bookno=%s, lib_id=%s, '
-            'user_id=%s, date_taken=%s, return_date=%s, fine=%s, cover_image=%s, status=%s '
+            'user_id=%s, date_taken=%s, return_date=%s, fine=%s, cover_image=%s, status=%s, category=%s '
             'WHERE ISBN=%s AND bookno=%s',
             (title, author, publisher, data.get('ISBN', '').strip(), data.get('bookno', '').strip(), lib_id,
-              user_id, date_taken, return_date, fine, image_filename, status, isbn, bookno)
+              user_id, date_taken, return_date, fine, image_filename, status, category, isbn, bookno)
         )
         cur.execute(
-            'UPDATE book_record SET update_record = %s WHERE lib_id = %s ORDER BY book_record_id DESC LIMIT 1',
-            (datetime.datetime.now(), lib_id)
+            'INSERT INTO book_record (lib_id, book_title, total_books_available, update_record) '
+            'VALUES (%s, %s, (SELECT COUNT(*) FROM book WHERE status = "available"), %s)',
+            (lib_id, title, datetime.datetime.now())
         )
         db.commit()
     except Exception as e:
@@ -294,11 +298,24 @@ def delete_book(isbn, bookno):
     db  = get_db()
     cur = dc(db)
     try:
+        # Check current status before deleting
+        cur.execute('SELECT status, title FROM book WHERE ISBN = %s AND bookno = %s', (isbn, bookno))
+        book = cur.fetchone()
+        
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
+            
+        if book['status'] != 'available':
+            return jsonify({
+                'error': f"Cannot delete '{book['title']}' because its current status is '{book['status']}'. "
+                         f"Please return or cancel the request first."
+            }), 400
+
         cur.execute('DELETE FROM book WHERE ISBN = %s AND bookno = %s', (isbn, bookno))
         cur.execute(
-            'UPDATE book_record SET total_books_available = GREATEST(total_books_available - 1, 0), '
-            'delete_record = %s WHERE lib_id = %s ORDER BY book_record_id DESC LIMIT 1',
-            (datetime.datetime.now(), lib_id)
+            'INSERT INTO book_record (lib_id, book_title, total_books_available, delete_record) '
+            'VALUES (%s, %s, (SELECT COUNT(*) FROM book WHERE status = "available"), %s)',
+            (lib_id, book['title'], datetime.datetime.now())
         )
         db.commit()
     except Exception as e:

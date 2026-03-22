@@ -52,8 +52,8 @@ def update_db_fines(app):
                     (fine, b['ISBN'], b['bookno'])
                 )
             db.commit()
-            print(f"💰 Database Fines Synced: Updated {len(books)} books.")
+            print(f"Database Fines Synced: Updated {len(books)} books.")
         except Exception as e:
-            print(f"❌ Error syncing fines: {e}")
+            print(f"Error syncing fines: {e}")
         finally:
             cur.close()

@@ -28,8 +28,8 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                         <div className="book-detail-author">by {book.author}</div>
                         <span className={`chip ${book.status}`}>
                             <span className={`avail-dot ${book.status}`}></span>
-                            {book.status === 'requested' ? "Requested" : 
-                             book.status === 'borrowed' ? "Borrowed" : "Available"}
+                            {book.status === 'requested' ? "Requested" :
+                                book.status === 'borrowed' ? "Borrowed" : "Available"}
                         </span>
                     </div>
                 </div>
@@ -39,10 +39,11 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                 {/* ── Book Information fields (maps 1-to-1 with Add Book form section) ── */}
                 <div className="book-detail-section-label">📖 Book Information</div>
                 {[
-                    ["ISBN",        book.ISBN],
-                    ["Book No.",    "#" + book.bookno],
-                    ["Publisher",   book.publisher || "—"],
-                    ["Issued By",   book.librarian_name || "Library"],
+                    ["ISBN", book.ISBN],
+                    ["Book No.", "#" + book.bookno],
+                    ["Category", book.category || "General"],
+                    ["Publisher", book.publisher || "—"],
+                    ["Issued By", book.librarian_name || "Library"],
                 ].map(([k, v]) => (
                     <div className="book-detail-row" key={k}>
                         <span className="book-detail-key">{k}</span>
@@ -56,8 +57,8 @@ function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
                         {isMyBook
                             ? (book.status === 'requested' ? "✅ Requested by you" : "✅ Borrowed by you")
                             : book.status === 'requested' ? "🔒 Reserved (Pending Pickup)"
-                            : book.user_id ? "🔒 Currently unavailable"
-                            : "✅ Available to borrow"}
+                                : book.user_id ? "🔒 Currently unavailable"
+                                    : "✅ Available to borrow"}
                     </span>
                 </div>
 
@@ -98,12 +99,30 @@ function Books() {
 
     const fetchBooks = useCallback((q = "") => {
         setLoading(true);
-        fetch(`${API}/books${q ? `?search=${encodeURIComponent(q)}` : ""}`)
+        const url = `${API}/books${q ? `?search=${encodeURIComponent(q.trim())}` : ""}`;
+        fetch(url)
             .then(r => r.json())
-            .then(data => { setBooks(Array.isArray(data) ? data : []); setPage(1); })
+            .then(data => {
+                const list = Array.isArray(data) ? data : [];
+                
+                // ─── ROBUST DEDUPLICATION FIX ───
+                // We use a Map keyed by ISBN + No to ensure each physical copy is only shown ONCE.
+                const uniqueMap = new Map();
+                list.forEach(item => {
+                    const key = `${item.ISBN}-${item.bookno}`.toLowerCase().replace(/\s/g, '');
+                    if (!uniqueMap.has(key)) {
+                        uniqueMap.set(key, item);
+                    }
+                });
+                const finalBooks = Array.from(uniqueMap.values());
+                console.log(`Loaded ${finalBooks.length} unique items from ${list.length} records`);
+                
+                setBooks(finalBooks);
+                setPage(1);
+            })
             .catch(() => toast("Could not load books", "error"))
             .finally(() => setLoading(false));
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [toast]);
 
     useEffect(() => { fetchBooks(); }, [fetchBooks]);
 
@@ -116,22 +135,52 @@ function Books() {
     };
 
     const handleBorrow = async (isbn, title) => {
+        // Find the specific copy that is currently available
+        const currentBooks = [...books];
+        const copyToUpdate = currentBooks.find(b => b.ISBN === isbn && b.status === "available");
+        
+        if (!copyToUpdate) {
+            toast("No available copies to borrow.", "error");
+            return;
+        }
+
+        // ─── OPTIMISTIC UI: Instant feedback for this specific copy ───
+        setBooks(prev => prev.map(b => 
+            (b.ISBN === isbn && b.bookno === copyToUpdate.bookno) 
+            ? { ...b, status: 'requested', user_id: user.user_id } 
+            : b
+        ));
+
         try {
-            const res = await fetch(`${API}/borrow/${isbn}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch(`${API}/borrow/${isbn}`, { 
+                method: "POST", 
+                headers: { Authorization: `Bearer ${token}` } 
+            });
             const data = await res.json();
-            if (!res.ok) { toast(data.error || "Failed to request", "error"); return; }
-            toast(data.message || `"${title}" requested successfully!`, "success");
+            
+            if (!res.ok) { 
+                toast(data.error || "Failed to request", "error"); 
+                setBooks(currentBooks); // Revert to previous state on failure
+                return; 
+            }
+            
+            toast(data.message || `"${title}" requested!`, "success");
+            // Background sync to ensure all copy statuses are correct from server
             fetchBooks(search);
-        } catch { toast("Server error", "error"); }
+        } catch { 
+            toast("Server error", "error"); 
+            setBooks(currentBooks); 
+        }
     };
 
-    // Filter
+    // Filter - ensuring we are working with correct indices
     const filtered = books.filter(b => {
-        if (activeFilter === "available") return b.status === 'available';
-        if (activeFilter === "borrowed") return b.status === 'borrowed';
-        if (activeFilter === "requested") return b.status === 'requested';
-        if (activeFilter === "my-requests") return b.user_id === user.user_id && b.status === 'requested';
-        if (activeFilter === "mine") return b.user_id === user.user_id && b.status === 'borrowed';
+        const status = b.status?.toLowerCase();
+        if (activeFilter === "available") return status === 'available';
+        if (activeFilter === "borrowed") return status === 'borrowed';
+        if (activeFilter === "requested") return status === 'requested';
+        if (activeFilter === "my-requests") return b.user_id === user.user_id && status === 'requested';
+        if (activeFilter === "mine") return b.user_id === user.user_id && status === 'borrowed';
         return true;
     });
 
@@ -196,7 +245,7 @@ function Books() {
                             {paginated.map(book => {
                                 const isMyBook = book.user_id === user.user_id;
                                 return (
-                                    <div className="book-card" key={book.bookno} id={`book-${book.bookno}`}
+                                    <div className="book-card" key={`${book.ISBN}-${book.bookno}`} id={`book-${book.ISBN}-${book.bookno}`}
                                         onClick={() => setDetail(book)}>
 
                                         {/* Book cover image strip */}
@@ -216,6 +265,7 @@ function Books() {
                                         </div>
                                         <div className="book-card-meta">
                                             <span className="chip">✍️ {book.author}</span>
+                                            <span className="chip">🏷️ {book.category || "General"}</span>
                                             {book.publisher && <span className="chip">🏢 {book.publisher}</span>}
                                             <span className={`chip ${book.status}`}>
                                                 {book.status === 'requested' ? "⏳ Reserved" : book.status === 'available' ? "Available" : "Borrowed"}

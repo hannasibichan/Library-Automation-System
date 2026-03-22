@@ -3,11 +3,11 @@
 .user-role-badge { display: inline-flex; align-items: center; gap: 0.3rem; border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.74rem; font-weight: 600; text-transform: capitalize; }
 .user-role-badge.student { background: var(--sage-light); border: 1px solid #BBF7D0; color: #166534; }
 .user-role-badge.faculty { background: var(--brand-light); border: 1px solid #DDD6FE; color: var(--brand-dark); }
-.expand-btn { font-size: 0.7rem; padding: 0.28rem 0.55rem; color: var(--ink-4); transition: all 0.15s; }
+.expand-btn { font-size: 0.75rem; padding: 0.28rem 0.55rem; color: var(--ink-2); transition: all 0.15s; font-weight: 600; }
 .expand-btn.active { background: var(--brand-light); border-color: #DDD6FE; color: var(--brand); }
 .row-expanded td { background: var(--brand-light) !important; }
 .expanded-books { padding: 0.85rem 1.35rem 0.85rem 2.25rem; background: var(--bg-alt); border-top: 1px solid var(--border); animation: enter 0.2s ease; }
-.expanded-label { font-size: 0.78rem; color: var(--ink-4); font-weight: 600; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.expanded-label { font-size: 0.8rem; color: var(--ink-2); font-weight: 700; margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .expanded-book-list { display: flex; flex-direction: column; gap: 0.35rem; }
 .expanded-book-item { display: flex; align-items: center; gap: 0.65rem; font-size: 0.88rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.45rem 0.75rem; }
 .expanded-book-item:hover { background: var(--brand-light); }

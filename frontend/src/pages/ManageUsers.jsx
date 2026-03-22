@@ -99,7 +99,7 @@ function ManageUsers() {
                                 {filtered.map(u => (
                                     <React.Fragment key={u.user_id}>
                                         <tr className={expanded === u.user_id ? "row-expanded" : ""}>
-                                            <td style={{ color: "rgba(167,139,250,0.7)", fontWeight: 700 }}>#{u.user_id}</td>
+                                            <td style={{ color: "var(--brand)", fontWeight: 700 }}>#{u.user_id}</td>
                                             <td className="user-name-cell">{u.name}</td>
                                             <td style={{ fontSize: "0.82rem" }}>{u.email}</td>
                                             <td style={{ fontSize: "0.8rem" }}>{u.address || "—"}</td>

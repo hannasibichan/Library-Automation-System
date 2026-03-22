@@ -18,7 +18,9 @@ def get_records():
     db  = get_db()
     cur = dc(db)
     cur.execute(
-        'SELECT r.*, l.name AS librarian_name FROM book_record r '
+        'SELECT r.*, l.name AS librarian_name, '
+        '(SELECT COUNT(*) FROM book WHERE lib_id = r.lib_id) AS live_available '
+        'FROM book_record r '
         'LEFT JOIN librarian l ON r.lib_id = l.lib_id '
         'ORDER BY r.book_record_id DESC'
     )
@@ -44,8 +46,8 @@ def create_record():
     cur = dc(db)
     try:
         cur.execute(
-            'INSERT INTO book_record (lib_id, total_books_available) VALUES (%s, %s)',
-            (lib_id, total)
+            'INSERT INTO book_record (lib_id, total_books_available, add_record) VALUES (%s, %s, %s)',
+            (lib_id, total, datetime.datetime.now())
         )
         db.commit()
         record_id = cur.lastrowid

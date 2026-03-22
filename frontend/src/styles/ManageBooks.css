@@ -1,9 +1,10 @@
 /* ManageBooks v5 */
 .book-status-cell { white-space: nowrap; }
-.isbn-cell { font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--ink-4); }
-.book-title-cell { font-weight: 600; color: var(--ink); max-width: 200px; }
-.form-readonly { opacity: 0.45; cursor: not-allowed; }
-.datetime-cell { white-space: nowrap; font-size: 0.8rem; color: var(--ink-3); }
+.isbn-cell { font-family: 'Courier New', monospace; font-size: 0.85rem; color: var(--ink-2); font-weight: 500; }
+.book-title-cell { font-weight: 700; color: var(--ink); max-width: 200px; }
+.form-readonly { opacity: 0.75; cursor: not-allowed; }
+.datetime-cell { white-space: nowrap; font-size: 0.85rem; color: var(--ink-2); font-weight: 500; }
+.lib-id-cell { font-size: 0.85rem; color: var(--ink-2); font-weight: 500; }
 
 /* ── Wide modal (for Add/Edit book with many fields) */
 .modal-wide { max-width: 720px !important; }
@@ -105,4 +106,53 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-md);
+}
+
+.category-tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: var(--brand-light);
+    color: var(--brand-dark);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    border: 1px solid #DDD6FE;
+}
+
+/* ── Header Actions ───────────────────────────────────────────────────────── */
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn-csv-download {
+    background: #ffffff;
+    color: var(--brand-dark) !important;
+    border: 1.5px solid var(--border);
+    padding: 0.48rem 1rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.82rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.btn-csv-download:hover {
+    border-color: var(--brand);
+    background: #fdfdff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+
+.btn-csv-download:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.65rem;
+    }
 }

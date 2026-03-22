@@ -9,15 +9,16 @@ const API = config.API_BASE_URL;
 
 const EMPTY = {
     ISBN: "", bookno: "", title: "", author: "", publisher: "",
+    category: "General",
     lib_id: "", user_id: "", date_taken: "", return_date: "", fine: 0,
     cover_image: "", originalBookNo: "", originalISBN: "",
 };
 
 const fmtDate = (dt) =>
-    dt ? new Date(dt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+    dt ? new Date(dt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 
 const fmtDateTime = (dt) =>
-    dt ? new Date(dt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+    dt ? new Date(dt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 // ── Inline book cover thumbnail ──────────────────────────────────────────────
 function BookThumb({ src, size = 40 }) {
@@ -174,6 +175,7 @@ function ManageBooks() {
             title: b.title,
             author: b.author,
             publisher: b.publisher || "",
+            category: b.category || "General",
             lib_id: b.lib_id ?? "",
             user_id: b.user_id ?? "",
             date_taken: b.date_taken ? b.date_taken.slice(0, 16) : "",
@@ -249,6 +251,35 @@ function ManageBooks() {
         if (exists) setSelected(selected.filter(s => !(s.ISBN === key.ISBN && s.bookno === key.bookno)));
         else setSelected([...selected, key]);
     };
+    const handleExportCSV = () => {
+        if (!books.length) return toast("No books to export", "error");
+
+        const headers = ["ISBN", "Book#", "Title", "Author", "Category", "Publisher", "Librarian", "Borrower", "Status", "Date Taken", "Return By", "Fine (Rs)"];
+        const rows = books.map(b => [
+            b.ISBN, b.bookno, b.title, b.author,
+            b.category || "General", b.publisher || "-",
+            b.librarian_name || b.lib_id || "-", 
+            b.borrowed_by || (b.user_id ? `UID:${b.user_id}` : "-"), 
+            b.status,
+            b.date_taken ? new Date(b.date_taken).toISOString().split('T')[0] : "-",
+            b.return_date ? new Date(b.return_date).toISOString().split('T')[0] : "-",
+            b.current_fine || 0
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+        ].join("\n");
+
+        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `library_catalog_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="page-wrapper">
@@ -257,11 +288,16 @@ function ManageBooks() {
 
                 <div className="section-header">
                     <h2>📚 Manage Books</h2>
+                    <div className="header-actions">
+                        <button className="btn btn-csv-download" onClick={handleExportCSV}>
+                            📥 Download CSV
+                        </button>
                         <button className="btn btn-violet" id="add-book-btn" onClick={openAdd}>+ Add Book</button>
+                    </div>
                 </div>
 
                 <div className="search-bar">
-                    <input id="manage-search-input" type="text" placeholder="🔍  Search books by title, author, isbn..."
+                    <input id="manage-search-input" type="text" placeholder="🔍  Search books by title, author, user id, isbn..."
                         value={search} onChange={handleSearchChange} />
                     {search && (
                         <button className="btn btn-outline btn-sm" onClick={() => { setSearch(""); fetchBooks(); }}>
@@ -281,7 +317,7 @@ function ManageBooks() {
                                 <tr>
                                     <th style={{ width: 56 }}>Cover</th>
                                     <th>ISBN</th><th>Book#</th><th>Title</th><th>Author</th>
-                                    <th>Publisher</th><th>Lib ID</th><th>Status</th>
+                                    <th>Category</th><th>Publisher</th><th>Librarian</th><th>Borrower</th><th>Status</th>
                                     <th>Date Taken</th><th>Return By</th><th>Fine (₹)</th>
                                     <th>Actions</th>
                                 </tr>
@@ -296,9 +332,15 @@ function ManageBooks() {
                                         <td>{b.bookno}</td>
                                         <td className="book-title-cell">{b.title}</td>
                                         <td>{b.author}</td>
+                                        <td>
+                                            <span className="category-tag">{b.category || "General"}</span>
+                                        </td>
                                         <td>{b.publisher || "—"}</td>
-                                        <td style={{ color: "rgba(200,190,255,0.6)", fontSize: "0.8rem" }}>
-                                            {b.lib_id ?? "—"}
+                                        <td className="lib-id-cell">
+                                            {b.librarian_name || b.lib_id || "-"}
+                                        </td>
+                                        <td className="user-id-cell">
+                                            {b.borrowed_by || (b.user_id ? `UID:${b.user_id}` : "-")}
                                         </td>
                                         <td className="book-status-cell">
                                             <span className={`chip ${b.status}`}>
@@ -319,7 +361,7 @@ function ManageBooks() {
                                         <td>
                                             {(b.current_fine || b.fine) > 0
                                                 ? <span className="chip danger">₹{Number(b.current_fine || b.fine).toFixed(2)}</span>
-                                                : <span style={{ opacity: 0.4 }}>₹0.00</span>}
+                                                : <span style={{ opacity: 0.7 }}>₹0.00</span>}
                                         </td>
                                         <td>
                                             <div style={{ display: "flex", gap: "0.5rem" }}>
@@ -359,6 +401,7 @@ function ManageBooks() {
                                         { field: "bookno",       label: "Book No. *",  readOnly: false,    type: "text" },
                                         { field: "title",        label: "Title *",     readOnly: false,    type: "text" },
                                         { field: "author",       label: "Author *",    readOnly: false,    type: "text" },
+                                        { field: "category",     label: "Category",    readOnly: false,    type: "text" },
                                         { field: "publisher",    label: "Publisher",   readOnly: false,    type: "text" },
                                     ].map(({ field, label, readOnly, type }) => (
                                         <div className="form-group" key={field}>
@@ -372,15 +415,6 @@ function ManageBooks() {
                                             />
                                         </div>
                                     ))}
-                                    {editMode && (
-                                        <div className="form-group">
-                                            <label htmlFor="book-lib_id">Librarian ID (Manager)</label>
-                                            <input id="book-lib_id" type="number" min="1"
-                                                value={form.lib_id}
-                                                onChange={e => setForm({ ...form, lib_id: e.target.value })}
-                                            />
-                                        </div>
-                                    )}
                                 </div>
 
                                 {/* ── Cover Image ── */}
@@ -469,6 +503,7 @@ function ManageBooks() {
                                     ["ISBN",         detailBook.ISBN],
                                     ["Book No.",     "#" + detailBook.bookno],
                                     ["Author",       detailBook.author],
+                                    ["Category",     detailBook.category || "General"],
                                     ["Publisher",    detailBook.publisher || "—"],
                                     ["Librarian ID", detailBook.lib_id ?? "—"],
                                     ["Status",       detailBook.status === 'requested' ? "Requested" : detailBook.user_id ? "Borrowed" : "Available"],
@@ -502,12 +537,25 @@ function ManageBooks() {
                             <h2>🗑️ Delete Book?</h2>
                             <button className="modal-close" onClick={() => setDelConfirm(null)}>✕</button>
                         </div>
-                        <p style={{ color: "rgba(200,190,255,0.75)", margin: "0.5rem 0 1.5rem" }}>
-                            Are you sure you want to delete <strong style={{ color: "#e2e0ff" }}>"{delConfirm.title}"</strong>?
+                        <p style={{ color: "var(--ink-4)", margin: "0.5rem 0 1.5rem", fontSize: "0.95rem" }}>
+                            {delConfirm.status === 'available' ? (
+                                <>Are you sure you want to delete <strong style={{ color: "var(--ink)" }}>"{delConfirm.title}"</strong>?</>
+                            ) : (
+                                <span style={{ color: "var(--coral)", fontWeight: 500 }}>
+                                    ⚠️ This book is currently <strong>{delConfirm.status}</strong> and cannot be deleted. 
+                                    Please return or cancel the request first.
+                                </span>
+                            )}
                         </p>
                         <div className="modal-actions">
-                            <button className="btn btn-outline" onClick={() => setDelConfirm(null)}>Cancel</button>
-                            <button className="btn btn-red" id="confirm-delete-btn" onClick={() => handleDelete(delConfirm.ISBN, delConfirm.bookno)}>Yes, Delete</button>
+                            <button className="btn btn-outline" onClick={() => setDelConfirm(null)}>
+                                {delConfirm.status === 'available' ? 'Cancel' : 'Close'}
+                            </button>
+                            {delConfirm.status === 'available' && (
+                                <button className="btn btn-red" id="confirm-delete-btn" onClick={() => handleDelete(delConfirm.ISBN, delConfirm.bookno)}>
+                                    Yes, Delete
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toast";
 import "../styles/Login.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function Login() {
     const toast = useToast();

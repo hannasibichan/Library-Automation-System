@@ -4,7 +4,8 @@ import { SkeletonCard } from "../components/SkeletonLoader";
 import { useToast } from "../components/Toast";
 import "../styles/Books.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function BookDetailModal({ book, onClose, onBorrow, isBorrowed, isMyBook }) {
     return (

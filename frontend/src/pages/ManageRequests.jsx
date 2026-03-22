@@ -3,7 +3,8 @@ import Navbar from "../components/Navbar";
 import { useToast } from "../components/Toast";
 import "../styles/Global.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function ManageRequests() {
     const toast = useToast();

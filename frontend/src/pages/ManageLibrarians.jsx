@@ -5,7 +5,8 @@ import { useToast } from "../components/Toast";
 import { SkeletonTable } from "../components/SkeletonLoader";
 import "../styles/Global.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function ManageLibrarians() {
     const toast = useToast();

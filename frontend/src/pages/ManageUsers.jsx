@@ -4,7 +4,8 @@ import { useToast } from "../components/Toast";
 import { SkeletonTable } from "../components/SkeletonLoader";
 import "../styles/ManageUsers.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function ManageUsers() {
     const toast = useToast();

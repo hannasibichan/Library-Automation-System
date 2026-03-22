@@ -59,8 +59,9 @@ def create_app():
         # Sync once at startup
         update_db_fines(app)
 
-    # Global CORS policy for dev - Ensuring headers are always present
-    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]}}, supports_credentials=True)
+    # CORS Policy - Allow production frontend and local development
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    CORS(app, resources={r"/api/*": {"origins": [frontend_url, "http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]}}, supports_credentials=True)
 
     # Serve static uploads
     import pathlib

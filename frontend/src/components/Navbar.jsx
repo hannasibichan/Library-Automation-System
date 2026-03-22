@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import "../styles/Navbar.css";
+import config from "../config";
 
 function Navbar() {
     const navigate = useNavigate();
@@ -26,7 +27,7 @@ function Navbar() {
     useEffect(() => {
         if (isLib) {
             const fetchCount = () => {
-                fetch("http://localhost:5000/api/requests/count", {
+                fetch(`${config.API_BASE_URL}/requests/count`, {
                     headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` }
                 })
                 .then(r => r.json())

@@ -4,7 +4,8 @@ import { SkeletonCard } from "../components/SkeletonLoader";
 import { useToast } from "../components/Toast";
 import "../styles/MyBooks.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 const fmtDate = (dt) =>
     dt ? new Date(dt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";

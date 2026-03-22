@@ -5,7 +5,8 @@ import { SkeletonStatCards, SkeletonCard } from "../components/SkeletonLoader";
 import { useToast } from "../components/Toast";
 import "../styles/Dashboard.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function useCountUp(target, delay = 100) {
     const [count, setCount] = useState(0);

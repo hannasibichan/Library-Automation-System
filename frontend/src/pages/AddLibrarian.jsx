@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "../components/Toast";
+import config from "../config";
 import "../styles/AddLibrarian.css";
 
-const API = "http://localhost:5000/api";
+const API = config.API_BASE_URL;
 
 function AddLibrarian() {
     const toast = useToast();

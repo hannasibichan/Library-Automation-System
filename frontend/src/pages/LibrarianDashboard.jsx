@@ -5,7 +5,8 @@ import { SkeletonStatCards } from "../components/SkeletonLoader";
 import { useToast } from "../components/Toast";
 import "../styles/LibrarianDashboard.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 function StatCard({ icon, value, label, colorClass }) {
     const [count, setCount] = useState(0);

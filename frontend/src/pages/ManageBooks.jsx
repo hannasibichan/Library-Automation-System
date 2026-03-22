@@ -4,7 +4,8 @@ import { useToast } from "../components/Toast";
 import { SkeletonTable } from "../components/SkeletonLoader";
 import "../styles/ManageBooks.css";
 
-const API = "http://localhost:5000/api";
+import config from "../config";
+const API = config.API_BASE_URL;
 
 const EMPTY = {
     ISBN: "", bookno: "", title: "", author: "", publisher: "",
